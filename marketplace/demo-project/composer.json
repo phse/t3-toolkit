@@ -1,0 +1,5 @@
+{
+  "name": "acme/demo",
+  "require": { "typo3/cms-core": "^13.4", "acme/demo-site": "@dev" },
+  "repositories": [{ "type": "path", "url": "packages/*" }]
+}

@@ -1,0 +1,20 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Acme\DemoSite\:
+    resource: '../Classes/*'
+
+  Acme\DemoSite\EventListener\AddTeaserData:
+    tags:
+      - name: event.listener
+        identifier: 'demo-site/add-teaser-data'
+        event: TYPO3\CMS\Frontend\Event\AfterCacheableContentIsGeneratedEvent
+
+  Acme\DemoSite\Command\ImportCommand:
+    tags:
+      - name: console.command
+        command: 'demo:import'
+        description: 'Imports teasers from the feed'

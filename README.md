@@ -7,6 +7,8 @@ ID: `app.heckit.ide.t3toolkit` · Source: [github.com/phse/t3-toolkit](https://g
 Navigation for TYPO3 (v12+) projects in JetBrains IDEs, in both directions: from Fluid templates to partials, layouts,
 sections and Fluid Components, from `Services.yaml` to PHP classes - and back to everything that uses them.
 
+![Usages of a partial in the gutter](marketplace/screenshots/01-partial-usages.png)
+
 ## Features
 
 | Where | What |
@@ -42,10 +44,25 @@ Needs JDK 21+ for Gradle (the toolchain downloads JDK 25).
 
 ## Publishing
 
-1. Raise `pluginVersion` in `gradle.properties`, add the change notes in `build.gradle.kts`.
-2. `./gradlew verifyPlugin`
-3. `./gradlew publishPlugin` (token as `jetbrainsMarketplaceToken` in `~/.gradle/gradle.properties`)
-4. Tag the release.
+The Marketplace description lives in `src/main/resources/META-INF/plugin.xml`, the change notes in `build.gradle.kts`,
+the icon in `META-INF/pluginIcon.svg` / `pluginIcon_dark.svg` (read by the Marketplace from the ZIP).
+
+1. Raise `pluginVersion` in `gradle.properties`, add the change notes.
+2. `./gradlew clean buildPlugin verifyPlugin`
+3. `./gradlew publishPlugin` (token as `jetbrainsMarketplaceToken` in `~/.gradle/gradle.properties`
+   or `PUBLISH_TOKEN`). The first version has to be uploaded by hand on the Marketplace.
+4. Tag the commit (`git tag v<version>`) and push.
+5. Screenshots and tags are set by hand on the plugin page (*Edit Plugin*); `publishPlugin` doesn't upload them.
+
+## Regenerating the screenshots
+
+```
+./gradlew runIde -Pscreenshots=marketplace/screenshots
+```
+
+Copies `marketplace/demo-project` (a small neutral TYPO3 extension) to `/Users/Shared/t3-demo`, so no user path shows
+up in the images, opens it in the sandbox and writes the PNGs to `marketplace/screenshots/`. Close a running sandbox
+first. The helper lives in `src/screenshot/` and is only compiled with `-Pscreenshots`, never into a release.
 
 ## How it works
 

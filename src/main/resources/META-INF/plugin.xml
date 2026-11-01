@@ -71,6 +71,7 @@ registered with PHP attributes - or in <code>Services.yaml</code> where the TYPO
                          displayName="Services.yaml: entry can be a PHP attribute" enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="app.heckit.ide.t3toolkit.services.ServicesAttributeInspection"/>
         <notificationGroup id="T3 Toolkit" displayType="BALLOON"/>
+        <postStartupActivity implementation="app.heckit.ide.t3toolkit.ScreenshotStarter"/>
         <projectConfigurable parentId="language" id="app.heckit.ide.t3toolkit" displayName="T3 Toolkit"
                              instance="app.heckit.ide.t3toolkit.settings.T3Configurable"/>
     </extensions>

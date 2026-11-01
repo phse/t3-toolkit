@@ -1,0 +1,6 @@
+{
+  "name": "acme/demo-site",
+  "type": "typo3-cms-extension",
+  "autoload": { "psr-4": { "Acme\\DemoSite\\": "Classes/" } },
+  "extra": { "typo3/cms": { "extension-key": "demo_site" } }
+}

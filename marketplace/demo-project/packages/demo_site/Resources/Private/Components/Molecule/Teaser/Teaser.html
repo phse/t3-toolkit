@@ -1,0 +1,13 @@
+<fc:component>
+  <fc:param name="title" type="string" />
+  <fc:param name="subtitle" type="string" optional="1" />
+  <fc:param name="image" type="Image" optional="1" />
+  <fc:param name="link" type="Typolink" optional="1" />
+
+  <fc:renderer>
+    <section class="teaser">
+      <h2>{title}</h2>
+      <f:if condition="{subtitle}"><p>{subtitle}</p></f:if>
+    </section>
+  </fc:renderer>
+</fc:component>

@@ -20,6 +20,15 @@ kotlin {
     jvmToolchain(25)
 }
 
+// ./gradlew runIde -Pscreenshots=<ordner> baut den Screenshot-Helfer mit ein (nie für Releases verwenden).
+val screenshotDir = providers.gradleProperty("screenshots").orNull
+
+sourceSets {
+    main {
+        if (screenshotDir != null) kotlin.srcDir("src/screenshot/kotlin")
+    }
+}
+
 repositories {
     mavenCentral()
     intellijPlatform {
@@ -87,10 +96,24 @@ tasks.jar {
     from(files("LICENSE", "NOTICE")) { into("META-INF") }
 }
 
+// Für Screenshots wird das Demo-Projekt an einen neutralen Ort kopiert, damit kein lokaler Benutzerpfad im Bild erscheint.
+val screenshotProjectDir = "/Users/Shared/t3-demo"
+
+val prepareScreenshotProject = tasks.register<Sync>("prepareScreenshotProject") {
+    from("marketplace/demo-project")
+    into(screenshotProjectDir)
+}
+
 tasks.runIde {
     jvmArgs("-Didea.trust.all.projects=true")
-    // ./gradlew runIde -PopenProject=/pfad/zum/projekt öffnet direkt ein Projekt in der Sandbox.
-    providers.gradleProperty("openProject").orNull?.let { args(it) }
+    if (screenshotDir != null) {
+        dependsOn(prepareScreenshotProject)
+        args(screenshotProjectDir)
+        jvmArgs("-Dt3toolkit.screenshots=${file(screenshotDir).absolutePath}")
+    } else {
+        // ./gradlew runIde -PopenProject=/pfad/zum/projekt öffnet direkt ein Projekt in der Sandbox.
+        providers.gradleProperty("openProject").orNull?.let { args(it) }
+    }
 }
 
 tasks.withType<Zip>().configureEach {

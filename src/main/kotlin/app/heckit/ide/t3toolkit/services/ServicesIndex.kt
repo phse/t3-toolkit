@@ -137,7 +137,9 @@ class ServicesIndex private constructor(
                     is YAMLScalar -> parts += "tag ${v.textValue}"
                     is YAMLMapping -> {
                         val name = v.getKeyValueByKey("name")?.valueText
-                        val extra = v.keyValues.filter { it.keyText != "name" }.joinToString { "${it.keyText}: ${it.valueText}" }
+                        // Klassennamen kurz (event: AfterCacheableContentIsGeneratedEvent), sonst wird das Popup sehr breit
+                        val extra = v.keyValues.filter { it.keyText != "name" }
+                            .joinToString { "${it.keyText}: ${it.valueText.substringAfterLast('\\')}" }
                         parts += "tag $name" + if (extra.isNotEmpty()) " ($extra)" else ""
                     }
                     else -> {}

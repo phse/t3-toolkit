@@ -1,0 +1,11 @@
+{namespace ds=Acme\DemoSite\Components}
+
+<f:layout name="Default" />
+
+<f:section name="Main">
+  <ds:molecule.teaser title="Things to do" />
+
+  <f:render partial="Teaser/List" arguments="{teasers: teasers}" />
+
+  <p class="price">From {demo:format.price(amount: 19.9)}</p>
+</f:section>

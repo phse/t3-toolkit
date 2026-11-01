@@ -1,0 +1,8 @@
+page.10 = FLUIDTEMPLATE
+page.10 {
+  templateName = Default
+  templateRootPaths.10 = EXT:demo_site/Resources/Private/Templates/Page/
+  partialRootPaths.10 = EXT:demo_site/Resources/Private/Partials/
+  layoutRootPaths.10 = EXT:demo_site/Resources/Private/Layouts/
+  dataProcessing.10 = Acme\DemoSite\DataProcessing\TeaserProcessor
+}
