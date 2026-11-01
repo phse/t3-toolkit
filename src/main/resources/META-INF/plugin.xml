@@ -1,0 +1,88 @@
+<idea-plugin>
+    <id>app.heckit.ide.t3toolkit</id>
+    <name>T3 Toolkit</name>
+    <vendor url="https://heckit.app">heck\it</vendor>
+
+    <description><![CDATA[
+<p>
+  Navigation for <b>TYPO3</b> (v12+) projects in both directions: from a Fluid template to its partials, layouts, sections
+  and Fluid Components - and from a partial, component or PHP class back to everything that uses it.
+</p>
+
+<h3>Fluid</h3>
+<ul>
+  <li><b>Partials, layouts and sections</b>: Cmd/Ctrl-click <code>partial="Some/Partial"</code>, <code>&lt;f:layout name="…"/&gt;</code>
+      or <code>section="…"</code> (tag and inline syntax). Root paths from TypoScript (<code>partialRootPaths</code> …) are included.</li>
+  <li><b>Fluid Components</b> (<code>fluid_components</code>): Cmd/Ctrl-click a component tag like <code>&lt;my:molecule.teaser&gt;</code>,
+      parameter completion from <code>&lt;fc:param&gt;</code> with type and required/optional, warning for missing required parameters.
+      Namespaces registered in <code>ext_localconf.php</code> are resolved.</li>
+  <li><b>Usages in the gutter</b>: partials, layouts, templates and components show where they are used - in other
+      templates, partials and TypoScript (<code>EXT:</code> paths, <code>templateName</code>).</li>
+  <li><b>ViewHelpers</b>: Cmd/Ctrl-click <code>&lt;f:format.html&gt;</code>, <code>{f:count()}</code> or <code>{x -&gt; my:thing()}</code> to open the
+      ViewHelper class, and an attribute or inline argument to jump to its <code>registerArgument()</code>. Namespaces from
+      <code>{namespace}</code>/<code>xmlns</code>, TYPO3 defaults, <code>ext_localconf.php</code> and your own list in
+      <i>Settings | Languages &amp; Frameworks | T3 Toolkit</i>.</li>
+  <li><b>Variables</b>: Cmd/Ctrl-click <code>{item.title}</code> to jump to where it comes from - <code>f:for as</code>,
+      <code>f:variable</code>, <code>f:alias</code> in the same file, <code>&lt;fc:param&gt;</code> in a component, the
+      <code>f:render arguments</code> that pass it to a partial, or TypoScript (<code>as =</code>, <code>variables.</code>) and
+      PHP (<code>assign()</code>, <code>assignMultiple()</code>, <code>$processedData[]</code>) for templates.</li>
+  <li><code>EXT:</code> paths are clickable in every file.</li>
+</ul>
+
+<h3>Services.yaml</h3>
+<ul>
+  <li>Cmd/Ctrl-click classes, <code>@service</code> references, <code>resource</code>/<code>exclude</code> paths and tag methods.</li>
+  <li>PHP classes show in the gutter in which <code>Services.yaml</code> they are registered and how: service with
+      public/tags/arguments, alias, injected into another service, or autodiscovered via <code>resource</code>.</li>
+  <li><b>Move to PHP attribute</b> (quick-fix): <code>event.listener</code>, <code>console.command</code>,
+      <code>messenger.message_handler</code> and <code>backend.controller</code> tags become <code>#[AsEventListener]</code>,
+      <code>#[AsCommand]</code>, <code>#[AsMessageHandler]</code> or <code>#[AsController]</code> on the class, the YAML entry is removed.
+      Only offered where the project's TYPO3 version supports the attribute (from <code>composer.lock</code>).</li>
+</ul>
+
+<h3>New classes</h3>
+<p><i>New | TYPO3</i> in a PSR-4 folder: event listener, console command, message handler, backend controller and public service,
+registered with PHP attributes - or in <code>Services.yaml</code> where the TYPO3 version needs it (e.g. event listeners on v12).</p>
+
+<p>Works alongside other TYPO3 plugins. TYPO3 is a registered trademark of the TYPO3 Association; this plugin is not affiliated with it.</p>
+
+<p>Like T3 Toolkit? You can support it via <a href="https://github.com/sponsors/phse">GitHub Sponsors</a> or <a href="https://ko-fi.com/phse_de">buy me a coffee on Ko-fi</a>. More tools at <a href="https://heckit.app">heckit.app</a>.</p>
+
+<p>Missing a feature, have an idea, or just want to share feedback? I would love to hear from you: <a href="mailto:plugin-t3-toolkit@heckit.app">plugin-t3-toolkit@heckit.app</a>.</p>
+]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.xml</depends>
+    <depends>com.jetbrains.php</depends>
+    <depends>org.jetbrains.plugins.yaml</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <errorHandler implementation="com.intellij.diagnostic.JetBrainsMarketplaceErrorReportSubmitter"/>
+        <gotoDeclarationHandler implementation="app.heckit.ide.t3toolkit.fluid.FluidGotoHandler"/>
+        <psi.referenceContributor language="HTML" implementation="app.heckit.ide.t3toolkit.fluid.FluidVariableReferences"/>
+        <gotoDeclarationHandler implementation="app.heckit.ide.t3toolkit.services.ServicesGotoHandler"/>
+        <codeInsight.lineMarkerProvider language="HTML" implementationClass="app.heckit.ide.t3toolkit.fluid.FluidUsagesLineMarker"/>
+        <codeInsight.lineMarkerProvider language="PHP" implementationClass="app.heckit.ide.t3toolkit.services.ServicesLineMarker"/>
+        <completion.contributor language="HTML" implementationClass="app.heckit.ide.t3toolkit.fluid.ComponentParamCompletion"/>
+        <localInspection language="HTML" shortName="T3FluidComponentParams" groupName="T3 Toolkit"
+                         displayName="Fluid Component: missing required parameter" enabledByDefault="true" level="WARNING"
+                         implementationClass="app.heckit.ide.t3toolkit.fluid.ComponentParamInspection"/>
+        <localInspection language="yaml" shortName="T3ServicesAttribute" groupName="T3 Toolkit"
+                         displayName="Services.yaml: entry can be a PHP attribute" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="app.heckit.ide.t3toolkit.services.ServicesAttributeInspection"/>
+        <notificationGroup id="T3 Toolkit" displayType="BALLOON"/>
+        <projectConfigurable parentId="language" id="app.heckit.ide.t3toolkit" displayName="T3 Toolkit"
+                             instance="app.heckit.ide.t3toolkit.settings.T3Configurable"/>
+    </extensions>
+
+    <actions>
+        <group id="T3Toolkit.NewGroup" text="TYPO3" popup="true" icon="com.jetbrains.php.PhpIcons.PHP_FILE">
+            <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFromTemplate"/>
+            <action id="T3Toolkit.NewEventListener" class="app.heckit.ide.t3toolkit.create.NewT3ClassAction$EventListener"/>
+            <action id="T3Toolkit.NewCommand" class="app.heckit.ide.t3toolkit.create.NewT3ClassAction$Command"/>
+            <action id="T3Toolkit.NewMessageHandler" class="app.heckit.ide.t3toolkit.create.NewT3ClassAction$MessageHandler"/>
+            <action id="T3Toolkit.NewBackendController" class="app.heckit.ide.t3toolkit.create.NewT3ClassAction$BackendController"/>
+            <action id="T3Toolkit.NewPublicService" class="app.heckit.ide.t3toolkit.create.NewT3ClassAction$PublicService"/>
+        </group>
+    </actions>
+</idea-plugin>
