@@ -2,7 +2,7 @@
 
 <img src="marketplace/plugin-icon.png" width="360" alt="T3 Toolkit icon for light and dark themes">
 
-ID: `app.heckit.ide.t3toolkit` · Source: [github.com/phse/t3-toolkit](https://github.com/phse/t3-toolkit) · Support: [GitHub Sponsors](https://github.com/sponsors/phse) or [Ko-fi](https://ko-fi.com/phse_de)
+Plugin ID `app.heckit.ide.t3toolkit` · Vendor heck\it ([heckit.app](https://heckit.app)) · [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/35716-t3-toolkit) · Source: https://github.com/phse/t3-toolkit · Support: [GitHub Sponsors](https://github.com/sponsors/phse) or [Ko-fi](https://ko-fi.com/phse_de) · Feedback and feature requests: [plugin-t3-toolkit@heckit.app](mailto:plugin-t3-toolkit@heckit.app)
 
 Navigation for TYPO3 (v12+) projects in JetBrains IDEs, in both directions: from Fluid templates to partials, layouts,
 sections and Fluid Components, from `Services.yaml` to PHP classes - and back to everything that uses them.
@@ -27,7 +27,7 @@ sections and Fluid Components, from `Services.yaml` to PHP classes - and back to
 
 ## Installation
 
-JetBrains Marketplace (not published yet) or *Settings | Plugins | ⚙ | Install Plugin from Disk…* with the ZIP from `build/distributions`.
+[JetBrains Marketplace](https://plugins.jetbrains.com/plugin/35716-t3-toolkit) (*Settings | Plugins*, search "T3 Toolkit") or *Settings | Plugins | ⚙ | Install Plugin from Disk…* with the ZIP from `build/distributions`.
 
 ## Build and run
 
