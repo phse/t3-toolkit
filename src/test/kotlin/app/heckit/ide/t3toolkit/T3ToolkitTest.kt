@@ -1,5 +1,6 @@
 package app.heckit.ide.t3toolkit
 
+import app.heckit.ide.t3toolkit.create.NewComponentAction
 import app.heckit.ide.t3toolkit.fluid.Fluid
 import app.heckit.ide.t3toolkit.fluid.FluidGotoHandler
 import app.heckit.ide.t3toolkit.services.ServicesGotoHandler
@@ -77,6 +78,94 @@ class T3ToolkitTest : BasePlatformTestCase() {
         // Datei liegt außerhalb, Namespace ist trotzdem registriert
         val items = myFixture.completeBasic()?.map { it.lookupString }.orEmpty()
         assertTrue(items.toString(), "title" in items && "items" in items)
+    }
+
+    fun testComponentTagCompletion() {
+        setUpExtension()
+        myFixture.addFileToProject("packages/my_ext/Resources/Private/Components/Atom/Icon/Icon.html", "<fc:component><fc:renderer/></fc:component>")
+        myFixture.addFileToProject("packages/my_ext/Resources/Private/Components/Molecule/Teaser/Components/Inner/Inner.html", "<fc:component/>")
+        myFixture.configureByText("Use.html", "{namespace my=Vendor\\MyExt\\Components}\n<my:<caret>")
+        val items = myFixture.completeBasic()?.map { it.lookupString }.orEmpty()
+        assertEquals(listOf("my:atom.icon", "my:molecule.teaser"), items.sorted())
+        myFixture.lookup.currentItem = myFixture.lookupElements!!.first { it.lookupString == "my:molecule.teaser" }
+        myFixture.finishLookup(com.intellij.codeInsight.lookup.Lookup.NORMAL_SELECT_CHAR)
+        myFixture.checkResult("{namespace my=Vendor\\MyExt\\Components}\n<my:molecule.teaser title=\"<caret>\"")
+    }
+
+    fun testComponentPrefixCompletion() {
+        setUpExtension()
+        myFixture.configureByText("Prefix.html", "{namespace myComponents=Vendor\\MyExt\\Components}\n<myCo<caret>")
+        val items = myFixture.completeBasic()?.map { it.lookupString }
+        // Einziger Vorschlag wird direkt eingefügt
+        if (items == null) assertTrue(myFixture.editor.document.text, myFixture.editor.document.text.endsWith("<myComponents:"))
+        else assertTrue(items.toString(), "myComponents:" in items)
+    }
+
+    fun testFluidHrefNotReportedAsFile() {
+        val file = myFixture.configureByText("Link.html", "<a href=\"{f:uri.typolink(parameter: teaser.link)}\">x</a>\n<a href=\"missing.html\">y</a>")
+        val s = app.heckit.ide.t3toolkit.fluid.FluidHtmlSuppressor()
+        val id = app.heckit.ide.t3toolkit.fluid.FluidHtmlSuppressor.TOOL_ID
+        assertTrue(s.isSuppressedFor(file.findElementAt(file.text.indexOf("uri.typolink"))!!, id))
+        assertFalse(s.isSuppressedFor(file.findElementAt(file.text.indexOf("missing.html"))!!, id))
+        assertFalse(s.isSuppressedFor(file.findElementAt(file.text.indexOf("uri.typolink"))!!, "HtmlUnknownAttribute"))
+        // Die echte Inspection der IDE meldet den Fluid-Ausdruck nicht mehr, den fehlenden Pfad schon
+        myFixture.enableInspections(com.intellij.codeInsight.daemon.impl.analysis.HtmlUnknownTargetInspection())
+        val problems = myFixture.doHighlighting().mapNotNull { it.description }.filter { "resolve" in it }
+        assertEquals(problems.toString(), 1, problems.size)
+        assertTrue(problems.single(), "missing.html" in problems.single())
+    }
+
+    fun testMissingReferences() {
+        setUpExtension()
+        myFixture.addFileToProject("packages/my_ext/Classes/ViewHelpers/IconViewHelper.php", "<?php\nnamespace Vendor\\MyExt\\ViewHelpers;\nclass IconViewHelper {}")
+        val tpl = myFixture.addFileToProject("packages/my_ext/Resources/Private/Templates/Missing.html", """
+            {namespace my=Vendor\MyExt\Components}
+            {namespace x=Vendor\MyExt\ViewHelpers}
+            <f:layout name="Nope" />
+            <f:render partial="Some/Partial" />
+            <f:render partial="Some/Nope" />
+            <my:molecule.teaser title="a" />
+            <my:molecule.nope />
+            <x:icon /><x:whatever />
+        """.trimIndent())
+        myFixture.configureFromExistingVirtualFile(tpl.virtualFile)
+        myFixture.enableInspections(app.heckit.ide.t3toolkit.fluid.FluidMissingReferenceInspection())
+        val errors = myFixture.doHighlighting().mapNotNull { it.description }.filter { "not found" in it }.sorted()
+        assertEquals(listOf("Component 'my:molecule.nope' not found", "Layout 'Nope' not found", "Partial 'Some/Nope' not found"), errors)
+    }
+
+    fun testComponentRelatedAndNewComponent() {
+        setUpExtension()
+        myFixture.addFileToProject("packages/my_ext/Resources/Private/Components/Molecule/Teaser/Teaser.fixture.json", "{}")
+        myFixture.addFileToProject("packages/my_ext/Resources/Private/Components/Molecule/Teaser/Styles/base/_init.less", "")
+        val teaser = myFixture.findFileInTempDir("packages/my_ext/Resources/Private/Components/Molecule/Teaser/Teaser.html")
+        myFixture.addFileToProject("packages/my_ext/Resources/Private/Components/Molecule/Teaser/Scripts/teaser.js", "")
+        assertEquals(listOf("Teaser.fixture.json", "teaser.js", "_init.less"), Fluid.componentRelated(teaser).map { it.name })
+        val items = app.heckit.ide.t3toolkit.fluid.ComponentRelatedProvider().getItems(psiManager.findFile(teaser)!!)
+        assertEquals(3, items.size)
+        val js = myFixture.findFileInTempDir("packages/my_ext/Resources/Private/Components/Molecule/Teaser/Scripts/teaser.js")
+        assertEquals(teaser, Fluid.componentOwning(js))
+        assertNotNull(Fluid.componentsRootOf(project, teaser.parent))
+
+        val g = app.heckit.ide.t3toolkit.create.NewComponentAction.generate(
+            app.heckit.ide.t3toolkit.create.NewComponentAction.Form().apply {
+                name = "Card"
+                params.clear()
+                params += listOf(NewComponentAction.Param("title", "string", false), NewComponentAction.Param("items", "array", true), NewComponentAction.Param("image", "Image", true))
+            })
+        assertEquals("""<fc:component>
+  <fc:param name="title" type="string" />
+  <fc:param name="items" type="array" optional="1" />
+  <fc:param name="image" type="Image" optional="1" />
+
+  <fc:renderer>
+    <div class="card">
+      {title}
+    </div>
+  </fc:renderer>
+</fc:component>
+""", g.html)
+        assertEquals("{\n  \"default\": {\n    \"title\": \"Title\",\n    \"items\": [],\n    \"image\": null\n  }\n}\n", g.fixture)
     }
 
     fun testServicesYaml() {

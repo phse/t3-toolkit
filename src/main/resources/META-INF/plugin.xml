@@ -12,10 +12,13 @@
 <h3>Fluid</h3>
 <ul>
   <li><b>Partials, layouts and sections</b>: Cmd/Ctrl-click <code>partial="Some/Partial"</code>, <code>&lt;f:layout name="…"/&gt;</code>
-      or <code>section="…"</code> (tag and inline syntax). Root paths from TypoScript (<code>partialRootPaths</code> …) are included.</li>
-  <li><b>Fluid Components</b> (<code>fluid_components</code>): Cmd/Ctrl-click a component tag like <code>&lt;my:molecule.teaser&gt;</code>,
+      or <code>section="…"</code> (tag and inline syntax). Root paths from TypoScript (<code>partialRootPaths</code> …) are included.
+      Partials and layouts that cannot be found are marked as errors.</li>
+  <li><b>Fluid Components</b> (<code>fluid_components</code>): completion of component tags (prefixes as you type, <code>&lt;my:</code> lists all components
+      of the namespace and inserts the required parameters), Cmd/Ctrl-click a component tag like <code>&lt;my:molecule.teaser&gt;</code>,
       parameter completion from <code>&lt;fc:param&gt;</code> with type and required/optional, warning for missing required parameters.
-      Namespaces registered in <code>ext_localconf.php</code> are resolved.</li>
+      Unknown components are marked as errors. Gutter icon and <i>Navigate | Related Symbol</i> lead to the
+      component files (<code>.fixture.json</code>, <code>Styles</code>, <code>Scripts</code> …). Namespaces registered in <code>ext_localconf.php</code> are resolved.</li>
   <li><b>Usages in the gutter</b>: partials, layouts, templates and components show where they are used - in other
       templates, partials and TypoScript (<code>EXT:</code> paths, <code>templateName</code>).</li>
   <li><b>ViewHelpers</b>: Cmd/Ctrl-click <code>&lt;f:format.html&gt;</code>, <code>{f:count()}</code> or <code>{x -&gt; my:thing()}</code> to open the
@@ -27,6 +30,7 @@
       <code>f:render arguments</code> that pass it to a partial, or TypoScript (<code>as =</code>, <code>variables.</code>) and
       PHP (<code>assign()</code>, <code>assignMultiple()</code>, <code>$processedData[]</code>) for templates.</li>
   <li><code>EXT:</code> paths are clickable in every file.</li>
+  <li>No more <i>Unresolved file reference</i> for Fluid expressions like <code>href="{f:uri.typolink(…)}"</code>.</li>
 </ul>
 
 <h3>Services.yaml</h3>
@@ -41,8 +45,9 @@
 </ul>
 
 <h3>New classes</h3>
-<p><i>New | TYPO3</i> in a PSR-4 folder: event listener, console command, message handler, backend controller and public service,
-registered with PHP attributes - or in <code>Services.yaml</code> where the TYPO3 version needs it (e.g. event listeners on v12).</p>
+<p><i>New | TYPO3</i> in a PSR-4 folder: event listener, console command, message handler, backend controller, public service and middleware,
+registered with PHP attributes - or in <code>Services.yaml</code> where the TYPO3 version needs it (e.g. event listeners on v12). Middlewares are added to <code>Configuration/RequestMiddlewares.php</code>.
+In a components folder: <i>New | TYPO3 | Fluid Component</i> with a parameter table (name, type, optional) and fixture.</p>
 
 <p>Works alongside other TYPO3 plugins. TYPO3 is a registered trademark of the TYPO3 Association; this plugin is not affiliated with it.</p>
 
@@ -64,6 +69,12 @@ registered with PHP attributes - or in <code>Services.yaml</code> where the TYPO
         <codeInsight.lineMarkerProvider language="HTML" implementationClass="app.heckit.ide.t3toolkit.fluid.FluidUsagesLineMarker"/>
         <codeInsight.lineMarkerProvider language="PHP" implementationClass="app.heckit.ide.t3toolkit.services.ServicesLineMarker"/>
         <completion.contributor language="HTML" implementationClass="app.heckit.ide.t3toolkit.fluid.ComponentParamCompletion"/>
+        <completion.contributor language="HTML" order="first" implementationClass="app.heckit.ide.t3toolkit.fluid.ComponentTagCompletion"/>
+        <lang.inspectionSuppressor language="HTML" implementationClass="app.heckit.ide.t3toolkit.fluid.FluidHtmlSuppressor"/>
+        <gotoRelatedProvider implementation="app.heckit.ide.t3toolkit.fluid.ComponentRelatedProvider"/>
+        <localInspection language="HTML" shortName="T3FluidMissingReference" groupName="T3 Toolkit"
+                         displayName="Fluid: partial, layout or component not found" enabledByDefault="true" level="ERROR"
+                         implementationClass="app.heckit.ide.t3toolkit.fluid.FluidMissingReferenceInspection"/>
         <localInspection language="HTML" shortName="T3FluidComponentParams" groupName="T3 Toolkit"
                          displayName="Fluid Component: missing required parameter" enabledByDefault="true" level="WARNING"
                          implementationClass="app.heckit.ide.t3toolkit.fluid.ComponentParamInspection"/>
@@ -84,6 +95,8 @@ registered with PHP attributes - or in <code>Services.yaml</code> where the TYPO
             <action id="T3Toolkit.NewMessageHandler" class="app.heckit.ide.t3toolkit.create.NewT3ClassAction$MessageHandler"/>
             <action id="T3Toolkit.NewBackendController" class="app.heckit.ide.t3toolkit.create.NewT3ClassAction$BackendController"/>
             <action id="T3Toolkit.NewPublicService" class="app.heckit.ide.t3toolkit.create.NewT3ClassAction$PublicService"/>
+            <action id="T3Toolkit.NewComponent" class="app.heckit.ide.t3toolkit.create.NewComponentAction"/>
+            <action id="T3Toolkit.NewMiddleware" class="app.heckit.ide.t3toolkit.create.NewT3ClassAction$Middleware"/>
         </group>
     </actions>
 </idea-plugin>

@@ -1,6 +1,8 @@
 package app.heckit.ide.t3toolkit
 
+import app.heckit.ide.t3toolkit.create.EventClassField
 import app.heckit.ide.t3toolkit.create.NewT3ClassAction
+import app.heckit.ide.t3toolkit.create.RequestMiddlewares
 import app.heckit.ide.t3toolkit.services.ServicesAttributeInspection
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
@@ -147,5 +149,37 @@ final class Foo
 """, g.php)
         val v12 = NewT3ClassAction.generate(NewT3ClassAction.Kind.COMMAND, form.apply { commandName = "my:run" }, T3Version.get(project))
         assertTrue(v12.php, "#[AsCommand(name: 'my:run')]" in v12.php && "extends Command" in v12.php)
+    }
+
+    fun testGenerateMiddleware() {
+        val form = NewT3ClassAction.Form("Vendor\\MyExt\\Middleware", "Foo", "my_ext").apply {
+            middlewareId = "my_ext/foo"; after = "typo3/cms-frontend/site, typo3/cms-frontend/authentication"
+        }
+        val g = NewT3ClassAction.generate(NewT3ClassAction.Kind.MIDDLEWARE, form, T3Version.get(project))
+        assertTrue(g.php, "final class Foo implements MiddlewareInterface" in g.php && "use Psr\\Http\\Server\\RequestHandlerInterface;" in g.php)
+        val entry = g.middleware!!
+        assertEquals("""        'my_ext/foo' => [
+            'target' => \Vendor\MyExt\Middleware\Foo::class,
+            'after' => [
+                'typo3/cms-frontend/site',
+                'typo3/cms-frontend/authentication',
+            ],
+        ],
+""", entry)
+        val created = RequestMiddlewares.create("frontend", entry)
+        assertTrue(created, created.startsWith("<?php") && "    'frontend' => [\n$entry    ],\n];" in created)
+        val existing = "<?php\nreturn [\n    'frontend' => [\n        'x/y' => ['target' => X::class],\n    ],\n];\n"
+        assertEquals("<?php\nreturn [\n    'frontend' => [\n$entry        'x/y' => ['target' => X::class],\n    ],\n];\n",
+            RequestMiddlewares.insert(existing, "frontend", entry))
+        assertEquals("<?php\nreturn [\n    'frontend' => [\n        'x/y' => ['target' => X::class],\n    ],\n    'backend' => [\n$entry    ],\n];\n",
+            RequestMiddlewares.insert(existing, "backend", entry))
+        assertNull(RequestMiddlewares.insert("<?php\n", "frontend", entry))
+        val twoSpaces = RequestMiddlewares.insert("<?php\nreturn [\n  'frontend' => [\n  ],\n];\n", "frontend", entry)!!
+        assertTrue(twoSpaces, "\n    'my_ext/foo' => [\n      'target' =>" in twoSpaces)
+    }
+
+    fun testEventClassCompletionSource() {
+        myFixture.addFileToProject("vendor/e.php", "<?php\nnamespace A\\B;\nfinal class FooEvent {}\nabstract class AbstractBarEvent {}\nclass Other {}")
+        assertEquals(listOf("A\\B\\FooEvent"), EventClassField.eventClasses(project))
     }
 }

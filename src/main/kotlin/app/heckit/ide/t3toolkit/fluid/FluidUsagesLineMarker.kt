@@ -64,6 +64,7 @@ class FluidUsagesLineMarker : RelatedItemLineMarkerProvider() {
         if (vf.extension?.lowercase() != "html") return
         val project = element.project
         val role = Fluid.roleOf(project, vf, file.viewProvider.contents) ?: return
+        if (role.kind == "Component") relatedMarker(element, vf)?.let(result::add)
         val usages = Fluid.usages(project, vf, role)
         val what = when (role.kind) {
             "Partials" -> "Partial"
@@ -89,6 +90,26 @@ class FluidUsagesLineMarker : RelatedItemLineMarkerProvider() {
         ) {
             override fun getElementPresentation(element: PsiElement) = "$what ${role.name}"
             // Nicht mit anderen Markern der Zeile zu einem Auswahl-Popup zusammenfassen
+            override fun canMergeWith(info: com.intellij.codeInsight.daemon.MergeableLineMarkerInfo<*>) = false
+        }
+    }
+
+    /** Zweites Icon an `<fc:component>`: Fixture, Styles, Scripts … der Component. */
+    private fun relatedMarker(element: PsiElement, vf: com.intellij.openapi.vfs.VirtualFile): RelatedItemLineMarkerInfo<*>? {
+        val psiManager = com.intellij.psi.PsiManager.getInstance(element.project)
+        val targets = Fluid.componentRelated(vf).mapNotNull { psiManager.findFile(it) }
+        if (targets.isEmpty()) return null
+        val names = targets.joinToString("<br>") { "&nbsp;&nbsp;" + StringUtil.escapeXmlEntities(it.virtualFile.path.substringAfter(vf.parent.path + "/")) }
+        val info = NavigationGutterIconBuilder.create(AllIcons.Nodes.Folder)
+            .setTargets(targets)
+            .setTooltipText("<html><b>Component files</b><br>$names</html>")
+            .setPopupTitle("Files of Component ${vf.nameWithoutExtension}")
+            .createLineMarkerInfo(element)
+        return object : RelatedItemLineMarkerInfo<PsiElement>(
+            element, element.textRange, info.icon, { info.lineMarkerTooltip }, info.navigationHandler,
+            GutterIconRenderer.Alignment.RIGHT, { info.createGotoRelatedItems() },
+        ) {
+            override fun getElementPresentation(element: PsiElement) = "Component files"
             override fun canMergeWith(info: com.intellij.codeInsight.daemon.MergeableLineMarkerInfo<*>) = false
         }
     }

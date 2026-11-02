@@ -60,6 +60,19 @@ intellijPlatform {
             untilBuild = provider { null }
         }
         changeNotes = """
+            <h3>1.1.0</h3>
+            <ul>
+              <li>Fluid Components: completion of component tags (prefix while typing, then all components of the
+                  namespace, required parameters inserted).</li>
+              <li>Fluid Components: gutter icon and Navigate | Related Symbol to the component files (fixture, styles,
+                  scripts …) and back.</li>
+              <li>New | TYPO3 | Fluid Component with a parameter table (name, type, optional) and fixture.</li>
+              <li>Partials, layouts and components that cannot be found are marked as errors.</li>
+              <li>New | TYPO3 | Middleware, registered in <code>Configuration/RequestMiddlewares.php</code>.</li>
+              <li>New | TYPO3 | Event Listener: completion for the event class.</li>
+              <li>HTML: no more "Unresolved file reference" for Fluid expressions like <code>href="{f:uri.typolink(…)}"</code>.</li>
+              <li>New | TYPO3: existing files are reported in the dialog instead of failing.</li>
+            </ul>
             <h3>1.0.0</h3>
             <ul>
               <li>First release.</li>

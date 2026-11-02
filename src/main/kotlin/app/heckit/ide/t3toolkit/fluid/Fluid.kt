@@ -24,6 +24,8 @@ object Fluid {
     val SECTION = Regex("""\bsection\s*[=:]\s*(["'])([^"'{}]+)\1""")
     val LAYOUT = Regex("""\bf:layout\b[^>}]*?\bname\s*[=:]\s*(["'])([^"'{}]+)\1""")
     val EXT_PATH = Regex("""EXT:[A-Za-z0-9_]+/[^\s"'<>(){},]*""")
+    /** Unterordner einer Component, die keine weiteren Components dieses Namespace enthalten. */
+    private val COMPONENT_ASSET_DIRS = setOf("Components", "Styles", "Scripts", "Data", "Images")
     val COMPONENT_TAG = Regex("""[<{]/?([A-Za-z0-9_]+):([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)""")
     private val NS_DECL = Regex("""\{namespace\s+([A-Za-z0-9_]+)\s*=\s*([A-Za-z0-9_\\]+)\s*}""")
     private val XMLNS = Regex("""xmlns:([A-Za-z0-9_]+)\s*=\s*["']https?://typo3\.org/ns/([^"']+)["']""")
@@ -46,7 +48,7 @@ object Fluid {
     }
 
     /** Components-Ordner und Restsegmente zu einem PHP-Namespace. */
-    private fun componentBase(project: Project, phpNs: String): Pair<VirtualFile, List<String>>? {
+    fun componentBase(project: Project, phpNs: String): Pair<VirtualFile, List<String>>? {
         val t3 = T3Project.get(project)
         val registered = t3.componentNamespaces.entries
             .filter { phpNs == it.key || phpNs.startsWith(it.key + "\\") }
@@ -68,6 +70,64 @@ object Fluid {
         val segments = rest + localName.split('.').map { it.replaceFirstChar(Char::uppercaseChar) }
         val dir = base.findFileByRelativePath(segments.joinToString("/")) ?: return null
         return dir.findChild(segments.last() + ".html")
+    }
+
+    /** Alle Components unter einem Präfix der Datei: lokaler Name (`molecule.teaser`) → HTML-Datei. */
+    fun componentsFor(file: PsiFile, prefix: String): Map<String, VirtualFile> {
+        if (prefix == "f" || prefix == "fc") return emptyMap()
+        val result = LinkedHashMap<String, VirtualFile>()
+        ViewHelpers.namespacesFor(file)[prefix].orEmpty().forEach { ns ->
+            val (base, rest) = componentBase(file.project, ns) ?: return@forEach
+            val start = base.findFileByRelativePath(rest.joinToString("/")) ?: return@forEach
+            collectComponents(start, emptyList(), result)
+        }
+        return result
+    }
+
+    private fun collectComponents(dir: VirtualFile, segments: List<String>, into: MutableMap<String, VirtualFile>) {
+        val html = if (segments.isNotEmpty()) dir.findChild(dir.name + ".html") else null
+        if (html != null) into.putIfAbsent(segments.joinToString(".") { it.replaceFirstChar(Char::lowercaseChar) }, html)
+        dir.children.filter { it.isDirectory }.forEach { child ->
+            // In einer Component: eigene Unter-Components und Styles gehören nicht zu diesem Namespace
+            if (html != null && child.name in COMPONENT_ASSET_DIRS) return@forEach
+            collectComponents(child, segments + child.name, into)
+        }
+    }
+
+    /** Liegt [dir] in einem Components-Ordner (registriert oder `Resources/Private/Components`)? */
+    fun componentsRootOf(project: Project, dir: VirtualFile): VirtualFile? {
+        T3Project.get(project).componentNamespaces.values.filter { VfsUtilCore.isAncestor(it, dir, false) }
+            .maxByOrNull { it.path.length }?.let { return it }
+        var current: VirtualFile? = dir
+        while (current != null) {
+            if (current.name == "Components" && current.parent?.name == "Private" && current.parent?.parent?.name == "Resources") return current
+            current = current.parent
+        }
+        return null
+    }
+
+    /** Dateien einer Component außer dem Template: Fixture, Styles, Scripts, Data, Images … (ohne Unter-Components). */
+    fun componentRelated(component: VirtualFile): List<VirtualFile> {
+        val dir = component.parent ?: return emptyList()
+        val result = ArrayList<VirtualFile>()
+        dir.findChild(component.nameWithoutExtension + ".fixture.json")?.let(result::add)
+        dir.children.filter { !it.isDirectory && it != component && it !in result }.sortedBy { it.name }.forEach(result::add)
+        dir.children.filter { it.isDirectory && it.name != "Components" }.sortedBy { it.name }.forEach { sub ->
+            VfsUtilCore.iterateChildrenRecursively(sub, null) { if (!it.isDirectory) result += it; true }
+        }
+        return result
+    }
+
+    /** Component, zu der [file] gehört (Template selbst, Fixture oder Datei in einem Unterordner wie `Styles`). */
+    fun componentOwning(file: VirtualFile): VirtualFile? {
+        var dir = if (file.isDirectory) file else file.parent
+        repeat(6) {
+            val d = dir ?: return null
+            d.findChild(d.name + ".html")?.let { return it }
+            if (d.name == "Components") return null
+            dir = d.parent
+        }
+        return null
     }
 
     fun resolveComponentTag(file: PsiFile, tagName: String): VirtualFile? {

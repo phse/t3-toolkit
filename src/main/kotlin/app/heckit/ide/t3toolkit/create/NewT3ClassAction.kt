@@ -17,6 +17,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
@@ -33,6 +35,7 @@ abstract class NewT3ClassAction(private val kind: Kind) : DumbAwareAction(kind.t
         MESSAGE_HANDLER("Message Handler", "Message handler with #[AsMessageHandler]", "MyMessageHandler", "MessageHandler"),
         BACKEND_CONTROLLER("Backend Controller", "Backend module controller with #[AsController]", "MyModuleController", "Controller"),
         PUBLIC_SERVICE("Public Service", "Service with #[Autoconfigure(public: true)]", "MyService", "Service"),
+        MIDDLEWARE("Middleware", "PSR-15 middleware registered in Configuration/RequestMiddlewares.php", "MyMiddleware", "Middleware"),
     }
 
     class EventListener : NewT3ClassAction(Kind.EVENT_LISTENER)
@@ -40,6 +43,7 @@ abstract class NewT3ClassAction(private val kind: Kind) : DumbAwareAction(kind.t
     class MessageHandler : NewT3ClassAction(Kind.MESSAGE_HANDLER)
     class BackendController : NewT3ClassAction(Kind.BACKEND_CONTROLLER)
     class PublicService : NewT3ClassAction(Kind.PUBLIC_SERVICE)
+    class Middleware : NewT3ClassAction(Kind.MIDDLEWARE)
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -54,7 +58,7 @@ abstract class NewT3ClassAction(private val kind: Kind) : DumbAwareAction(kind.t
         val t3 = T3Project.get(project)
         val extKey = t3.extensionOf(dir)?.first ?: "my_ext"
         val form = Form(Psr4.namespaceFor(dir).orEmpty(), kind.defaultName, extKey)
-        if (!FormDialog(project, kind, form).showAndGet()) return
+        if (!FormDialog(project, kind, form, dir).showAndGet()) return
         val v = T3Version.get(project)
         val generated = generate(kind, form, v)
         var created: VirtualFile? = null
@@ -63,6 +67,7 @@ abstract class NewT3ClassAction(private val kind: Kind) : DumbAwareAction(kind.t
             VfsUtilCore.saveText(file, generated.php)
             created = file
             generated.yaml?.let { appendToServicesYaml(project, dir, form, it) }
+            generated.middleware?.let { registerMiddleware(project, dir, form, it) }
         })
         created?.let { OpenFileDescriptor(project, it).navigate(true) }
     }
@@ -80,6 +85,24 @@ abstract class NewT3ClassAction(private val kind: Kind) : DumbAwareAction(kind.t
         notify(project, "$note - registered in ${T3Project.get(project).extPathOf(services) ?: services.path} instead.", NotificationType.INFORMATION)
     }
 
+    private fun registerMiddleware(project: Project, dir: VirtualFile, form: Form, entry: String) {
+        val t3 = T3Project.get(project)
+        val ext = t3.extensionOf(dir)?.second
+        if (ext == null) {
+            notify(project, "Add this to Configuration/RequestMiddlewares.php ('${form.stack}'):\n$entry", NotificationType.WARNING)
+            return
+        }
+        val existing = ext.findFileByRelativePath("Configuration/RequestMiddlewares.php")
+        if (existing == null) {
+            val config = ext.findChild("Configuration") ?: ext.createChildDirectory(this, "Configuration")
+            VfsUtilCore.saveText(config.createChildData(this, "RequestMiddlewares.php"), RequestMiddlewares.create(form.stack, entry))
+            return
+        }
+        val updated = RequestMiddlewares.insert(VfsUtilCore.loadText(existing), form.stack, entry)
+        if (updated == null) notify(project, "Could not find the returned array in ${t3.extPathOf(existing) ?: existing.path}. Add this to '${form.stack}':\n$entry", NotificationType.WARNING)
+        else VfsUtilCore.saveText(existing, updated)
+    }
+
     private fun notify(project: Project, text: String, type: NotificationType) =
         NotificationGroupManager.getInstance().getNotificationGroup("T3 Toolkit").createNotification(text, type).notify(project)
 
@@ -90,10 +113,14 @@ abstract class NewT3ClassAction(private val kind: Kind) : DumbAwareAction(kind.t
         var description = ""
         var messageClass = ""
         var public = true
+        var stack = "frontend"
+        var middlewareId = "$extKey/"
+        var after = ""
+        var before = ""
         val fqn get() = (namespace.trim('\\') + "\\" + className).trimStart('\\')
     }
 
-    private class FormDialog(project: Project, private val kind: Kind, private val form: Form) : DialogWrapper(project) {
+    private class FormDialog(private val project: Project, private val kind: Kind, private val form: Form, private val dir: VirtualFile) : DialogWrapper(project) {
         init {
             title = "New ${kind.title}"
             init()
@@ -103,11 +130,22 @@ abstract class NewT3ClassAction(private val kind: Kind) : DumbAwareAction(kind.t
             row("Namespace:") { textField().bindText(form::namespace).columns(COLUMNS_LARGE) }
             row("Class name:") {
                 textField().bindText(form::className).columns(COLUMNS_LARGE).focused()
-                    .validationOnApply { if (Regex("[A-Za-z_][A-Za-z0-9_]*").matches(it.text.trim())) null else error("Invalid class name") }
+                    .validationOnApply {
+                        val name = it.text.trim()
+                        when {
+                            !Regex("[A-Za-z_][A-Za-z0-9_]*").matches(name) -> error("Invalid class name")
+                            dir.findChild("$name.php") != null -> error("$name.php already exists")
+                            else -> null
+                        }
+                    }
             }
             when (kind) {
                 Kind.EVENT_LISTENER -> {
-                    row("Event class:") { textField().bindText(form::eventClass).columns(COLUMNS_LARGE).comment("Fully qualified, e.g. TYPO3\\CMS\\Core\\Mail\\Event\\AfterMailerSentMessageEvent") }
+                    val field = EventClassField.create(project, form.eventClass)
+                    row("Event class:") {
+                        cell(field).align(AlignX.FILL).onApply { form.eventClass = field.text.trim() }
+                            .comment("Fully qualified; type part of the name and press Ctrl+Space, e.g. AfterMailerSentMessageEvent")
+                    }
                     row("Identifier:") { textField().bindText(form::identifier).columns(COLUMNS_LARGE) }
                 }
                 Kind.COMMAND -> {
@@ -117,11 +155,17 @@ abstract class NewT3ClassAction(private val kind: Kind) : DumbAwareAction(kind.t
                 Kind.MESSAGE_HANDLER -> row("Message class:") { textField().bindText(form::messageClass).columns(COLUMNS_LARGE) }
                 Kind.PUBLIC_SERVICE -> row { checkBox("Public (GeneralUtility::makeInstance, \$container->get())").bindSelected(form::public) }
                 Kind.BACKEND_CONTROLLER -> row { comment("Register the module in Configuration/Backend/Modules.php.") }
+                Kind.MIDDLEWARE -> {
+                    row("Stack:") { comboBox(listOf("frontend", "backend")).bindItem({ form.stack }, { form.stack = it ?: "frontend" }) }
+                    row("Identifier:") { textField().bindText(form::middlewareId).columns(COLUMNS_LARGE) }
+                    row("After:") { textField().bindText(form::after).columns(COLUMNS_LARGE).comment("Comma-separated identifiers, e.g. typo3/cms-frontend/site") }
+                    row("Before:") { textField().bindText(form::before).columns(COLUMNS_LARGE).comment("e.g. typo3/cms-frontend/base-redirect-resolver") }
+                }
             }
         }
     }
 
-    class Generated(val php: String, val yaml: String?)
+    class Generated(val php: String, val yaml: String?, val middleware: String? = null)
 
     companion object {
         fun generate(kind: Kind, form: Form, v: T3Version): Generated {
@@ -129,6 +173,7 @@ abstract class NewT3ClassAction(private val kind: Kind) : DumbAwareAction(kind.t
             val attrs = ArrayList<PhpAttribute>()
             var yaml: String? = null
             var extends = ""
+            var middleware: String? = null
             val body: String
             fun short(fqn: String): String { imports += fqn.trimStart('\\'); return fqn.trimStart('\\').substringAfterLast('\\') }
             when (kind) {
@@ -174,6 +219,15 @@ abstract class NewT3ClassAction(private val kind: Kind) : DumbAwareAction(kind.t
                     }
                     body = ""
                 }
+                Kind.MIDDLEWARE -> {
+                    extends = " implements " + short("Psr\\Http\\Server\\MiddlewareInterface")
+                    val request = short("Psr\\Http\\Message\\ServerRequestInterface")
+                    val handler = short("Psr\\Http\\Server\\RequestHandlerInterface")
+                    val response = short("Psr\\Http\\Message\\ResponseInterface")
+                    body = "    public function process($request \$request, $handler \$handler): $response\n    {\n" +
+                        "        return \$handler->handle(\$request);\n    }\n"
+                    middleware = RequestMiddlewares.entry(form.middlewareId.trim(), form.fqn, form.after, form.before)
+                }
             }
             val attrLines = PhpAttributes.renderStandalone(attrs, imports)
             val php = buildString {
@@ -183,7 +237,7 @@ abstract class NewT3ClassAction(private val kind: Kind) : DumbAwareAction(kind.t
                 attrLines.forEach { append(it).append('\n') }
                 append("final class ${form.className}$extends\n{\n").append(body).append("}\n")
             }
-            return Generated(php, yaml)
+            return Generated(php, yaml, middleware)
         }
     }
 }
