@@ -15,12 +15,16 @@ sections and Fluid Components, from `Services.yaml` to PHP classes - and back to
 |---|---|
 | Fluid | Cmd/Ctrl-click `partial="…"`, `section="…"`, `<f:layout name="…"/>` (tag and inline syntax). Root paths: `Resources/Private/<Kind>` of the own extension, `*RootPaths` from TypoScript, other extensions. |
 | ViewHelpers | Cmd/Ctrl-click `<f:format.html>`, `{f:count()}`, `{x -> my:thing()}` → class; attribute or inline argument → `registerArgument()` (also in parent classes). Namespaces like TYPO3: defaults (`f`, `core`), `ext_localconf.php` (`['SYS']['fluid']['namespaces']`), own list, `{namespace}`/`xmlns` - the last registered wins. |
+| ViewHelper completion | Tags (`<f:fo` → `f:format.html`, required arguments inserted) from all subclasses of `AbstractViewHelper` in the prefix's namespaces; arguments from `registerArgument()` (also parents) with type and description; missing required arguments are warnings. Hover a ViewHelper or argument for its DocBlock and argument table. |
+| Fluid names | Completion of partial, layout and section names (sections of the partial in the same tag, else of the file). |
+| Icons | Cmd/Ctrl-click and completion for `<core:icon identifier="…"/>` from `Configuration/Icons.php` of all extensions. |
 | Settings | *Languages & Frameworks \| T3 Toolkit* (stored in `.idea/t3toolkit.xml`): auto-detection on/off, additional namespaces `prefix = Ns1, Ns2`. |
 | Fluid variables | Cmd/Ctrl-click `{item.title}` → `f:for as`/`iteration`, `f:variable`, `f:alias` in the file; `<fc:param>` in components; `f:render arguments` passing it to a partial; for templates TypoScript `as =`/`variables.` and PHP `assign()`, `assignMultiple()`, `$processedData[]`. |
 | Fluid Components | Completion of component tags (`<myCo` → `myComponents:`, `<ns:` → all components of the namespace, required parameters inserted); Cmd/Ctrl-click `<ns:molecule.teaser>` and its attributes; completion of `<fc:param>` parameters; warning for missing required ones; gutter icon and *Navigate \| Related Symbol* to the component files (`.fixture.json`, `Styles`, `Scripts` …); *New \| TYPO3 \| Fluid Component* in a components folder. Namespaces from `ext_localconf.php` (`['fluid_components']['namespaces']`) or by convention `Vendor\Ext\Components`. |
 | Fluid errors | Partials, layouts and components that cannot be found are marked as errors (partials/layouts only where the root folders are known). |
 | Fluid gutter | Partials, layouts, templates and components list their usages (HTML, TypoScript `EXT:` paths, `templateName`). |
 | Any file | `EXT:` paths are clickable. |
+| Labels (XLIFF) | Cmd/Ctrl-click `LLL:EXT:ext/…/locallang.xlf:key` in any file → `<trans-unit>` (path → file); short keys in `<f:translate key="…"/>` / `{f:translate(key: …)}` use `Resources/Private/Language/locallang.xlf` of `extensionName` or of the template's extension (then of all extensions); also any `*:translate` ViewHelper, `LocalizationUtility::translate()` and own calls from the settings (*Additional calls with a label key*, e.g. `MyUtility::label(key, extension)`, `my:label(key)`). Completion of language files after `LLL:` and of keys (with source text) after `.xlf:` and in `f:translate`. Labels are folded and show their text. Missing files and keys are errors (quick-fix *Create label* adds the `<trans-unit>`); in language files, labels missing in or left over in a translation are warnings. Gutter icon on each `<trans-unit>` (also in `de.locallang.xlf` …) with its usages. Hover shows all translations; *Rename* (Shift+F6) on a key or `<trans-unit id>` changes it in every language file and usage. `.xlf` is registered as XML. |
 | HTML | *Unresolved file reference* is no longer reported for Fluid expressions like `href="{f:uri.typolink(…)}"`. |
 | Services.yaml | Cmd/Ctrl-click classes, `@service` references, `resource`/`exclude` paths, tag `method`. |
 | Services.yaml quick-fix | *Move to #[…]*: `event.listener` → `#[AsEventListener]` (13.0+), `console.command` → `#[AsCommand]` (12.4.8+, not with `schedulable: false`), `messenger.message_handler` → `#[AsMessageHandler]` (13.0+), `backend.controller` → `#[AsController]` (13.0+) / `#[Controller]` (12.x); `public: true` → `#[Autoconfigure(public: true)]`. Needs `autoconfigure: true`; the entry is removed when `resource` still finds the class. |
@@ -54,7 +58,7 @@ the icon in `META-INF/pluginIcon.svg` / `pluginIcon_dark.svg` (read by the Marke
 3. `./gradlew publishPlugin` (token as `jetbrainsMarketplaceToken` in `~/.gradle/gradle.properties`
    or `PUBLISH_TOKEN`). The first version has to be uploaded by hand on the Marketplace.
 4. Tag the commit (`git tag v<version>`) and push.
-5. Screenshots and tags are set by hand on the plugin page (*Edit Plugin*); `publishPlugin` doesn't upload them.
+5. Screenshots, tags and the custom page (`marketplace/custom-pages/configuration.md`, without its own H1) are set by hand on the plugin page (*Edit Plugin*); `publishPlugin` doesn't upload them.
 
 ## Regenerating the screenshots
 

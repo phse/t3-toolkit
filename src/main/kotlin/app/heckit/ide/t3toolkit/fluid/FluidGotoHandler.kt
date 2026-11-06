@@ -63,6 +63,8 @@ class FluidGotoHandler : GotoDeclarationHandler {
 
         // EXT:-Pfade überall
         Fluid.EXT_PATH.findAll(line).firstOrNull { col in it.range.first..it.range.last + 1 }?.let { m ->
+            // LLL:EXT:… übernimmt XliffGotoHandler
+            if (line.subSequence(0, m.range.first).endsWith("LLL:")) return null
             val target = T3Project.get(project).resolveExtPath(m.value) ?: return null
             val psi = if (target.isDirectory) psiManager.findDirectory(target) else psiManager.findFile(target)
             return psi?.let { arrayOf(it) }

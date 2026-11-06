@@ -61,20 +61,20 @@ class ComponentTagCompletion : CompletionContributor() {
             )
         }
     }
-
-    private fun insertRequired(ctx: InsertionContext, required: List<String>) {
-        if (required.isEmpty()) return
-        val doc = ctx.document
-        val next = doc.charsSequence.getOrNull(ctx.tailOffset)
-        if (next != null && (next.isLetterOrDigit() || next == '=')) return
-        // Tag hat schon Attribute (Name eines bestehenden Tags ersetzt) - nichts doppelt einfügen
-        val rest = doc.charsSequence.subSequence(ctx.tailOffset, doc.textLength)
-        val tagEnd = rest.indexOfFirst { it == '>' || it == '<' }.let { if (it < 0) rest.length else it }
-        if ('=' in rest.subSequence(0, tagEnd)) return
-        val attrs = required.joinToString("") { " $it=\"\"" }
-        val at = ctx.tailOffset
-        doc.insertString(at, attrs)
-        ctx.editor.caretModel.moveToOffset(at + required.first().length + 3)
-    }
 }
 
+/** Fügt Pflicht-Attribute hinter dem eben eingefügten Tag-Namen ein (Components und ViewHelper). */
+internal fun insertRequired(ctx: InsertionContext, required: List<String>) {
+    if (required.isEmpty()) return
+    val doc = ctx.document
+    val next = doc.charsSequence.getOrNull(ctx.tailOffset)
+    if (next != null && (next.isLetterOrDigit() || next == '=')) return
+    // Tag hat schon Attribute (Name eines bestehenden Tags ersetzt) - nichts doppelt einfügen
+    val rest = doc.charsSequence.subSequence(ctx.tailOffset, doc.textLength)
+    val tagEnd = rest.indexOfFirst { it == '>' || it == '<' }.let { if (it < 0) rest.length else it }
+    if ('=' in rest.subSequence(0, tagEnd)) return
+    val attrs = required.joinToString("") { " $it=\"\"" }
+    val at = ctx.tailOffset
+    doc.insertString(at, attrs)
+    ctx.editor.caretModel.moveToOffset(at + required.first().length + 3)
+}

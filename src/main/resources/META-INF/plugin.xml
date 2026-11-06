@@ -25,12 +25,31 @@
       ViewHelper class, and an attribute or inline argument to jump to its <code>registerArgument()</code>. Namespaces from
       <code>{namespace}</code>/<code>xmlns</code>, TYPO3 defaults, <code>ext_localconf.php</code> and your own list in
       <i>Settings | Languages &amp; Frameworks | T3 Toolkit</i>.</li>
+  <li><b>ViewHelper completion</b>: tags (<code>&lt;f:fo</code> → <code>f:format.html</code>, required arguments inserted) and arguments
+      from <code>registerArgument()</code> with type and description; missing required arguments are marked. Hover a ViewHelper or
+      argument for its documentation.</li>
+  <li>Completion of partial, layout and section names in <code>partial="…"</code>, <code>&lt;f:layout name="…"/&gt;</code> and <code>section="…"</code>.</li>
+  <li><b>Icons</b>: Cmd/Ctrl-click and completion for <code>&lt;core:icon identifier="…"/&gt;</code> from <code>Configuration/Icons.php</code>.</li>
   <li><b>Variables</b>: Cmd/Ctrl-click <code>{item.title}</code> to jump to where it comes from - <code>f:for as</code>,
       <code>f:variable</code>, <code>f:alias</code> in the same file, <code>&lt;fc:param&gt;</code> in a component, the
       <code>f:render arguments</code> that pass it to a partial, or TypoScript (<code>as =</code>, <code>variables.</code>) and
       PHP (<code>assign()</code>, <code>assignMultiple()</code>, <code>$processedData[]</code>) for templates.</li>
   <li><code>EXT:</code> paths are clickable in every file.</li>
   <li>No more <i>Unresolved file reference</i> for Fluid expressions like <code>href="{f:uri.typolink(…)}"</code>.</li>
+</ul>
+
+<h3>Labels (XLIFF)</h3>
+<ul>
+  <li>Cmd/Ctrl-click <code>LLL:EXT:my_ext/Resources/Private/Language/locallang.xlf:some.key</code> in any file (Fluid, PHP, TCA,
+      TypoScript, YAML, FlexForms) to jump to the <code>&lt;trans-unit&gt;</code>, or the path to open the file. Short keys in
+      <code>&lt;f:translate key="…"/&gt;</code> use the <code>locallang.xlf</code> of <code>extensionName</code> or of the template's extension; also any own <code>translate</code> ViewHelper,
+      <code>LocalizationUtility::translate()</code> and your own ViewHelpers, methods and functions from the settings.</li>
+  <li>Completion of language files after <code>LLL:</code> and of keys (with their text) after <code>.xlf:</code> and in <code>f:translate</code>.</li>
+  <li>Labels are folded in the editor and show their text (click to expand).</li>
+  <li>Missing language files and keys are marked as errors, with a quick-fix <i>Create label</i> that adds the <code>&lt;trans-unit&gt;</code>.</li>
+  <li>In language files: labels missing in a translation (<code>de.locallang.xlf</code> …) or left over in one are marked.</li>
+  <li>Each <code>&lt;trans-unit&gt;</code> shows in the gutter where the label is used.</li>
+  <li>Hover a label to see all its translations; <i>Rename</i> (Shift+F6) changes the key in every language file and usage.</li>
 </ul>
 
 <h3>Services.yaml</h3>
@@ -63,6 +82,7 @@ In a components folder: <i>New | TYPO3 | Fluid Component</i> with a parameter ta
 
     <extensions defaultExtensionNs="com.intellij">
         <errorHandler implementation="com.intellij.diagnostic.JetBrainsMarketplaceErrorReportSubmitter"/>
+        <gotoDeclarationHandler order="first" implementation="app.heckit.ide.t3toolkit.xliff.XliffGotoHandler"/>
         <gotoDeclarationHandler implementation="app.heckit.ide.t3toolkit.fluid.FluidGotoHandler"/>
         <psi.referenceContributor language="HTML" implementation="app.heckit.ide.t3toolkit.fluid.FluidVariableReferences"/>
         <gotoDeclarationHandler implementation="app.heckit.ide.t3toolkit.services.ServicesGotoHandler"/>
@@ -81,6 +101,30 @@ In a components folder: <i>New | TYPO3 | Fluid Component</i> with a parameter ta
         <localInspection language="yaml" shortName="T3ServicesAttribute" groupName="T3 Toolkit"
                          displayName="Services.yaml: entry can be a PHP attribute" enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="app.heckit.ide.t3toolkit.services.ServicesAttributeInspection"/>
+        <fileType name="XML" extensions="xlf"/>
+        <completion.contributor language="any" order="first" implementationClass="app.heckit.ide.t3toolkit.xliff.XliffCompletion"/>
+        <typedHandler implementation="app.heckit.ide.t3toolkit.xliff.XliffTypedHandler"/>
+        <codeInsight.lineMarkerProvider language="XML" implementationClass="app.heckit.ide.t3toolkit.xliff.XliffUsagesLineMarker"/>
+        <localInspection shortName="T3XliffMissing" groupName="T3 Toolkit"
+                         displayName="Label: language file or key not found" enabledByDefault="true" level="ERROR"
+                         implementationClass="app.heckit.ide.t3toolkit.xliff.XliffMissingInspection"/>
+        <lang.foldingBuilder language="HTML" implementationClass="app.heckit.ide.t3toolkit.xliff.XliffFolding"/>
+        <lang.foldingBuilder language="PHP" implementationClass="app.heckit.ide.t3toolkit.xliff.XliffFolding"/>
+        <lang.foldingBuilder language="yaml" implementationClass="app.heckit.ide.t3toolkit.xliff.XliffFolding"/>
+        <lang.foldingBuilder language="XML" implementationClass="app.heckit.ide.t3toolkit.xliff.XliffFolding"/>
+        <lang.foldingBuilder language="TEXT" implementationClass="app.heckit.ide.t3toolkit.xliff.XliffFolding"/>
+        <localInspection language="XML" shortName="T3XliffTranslation" groupName="T3 Toolkit"
+                         displayName="Label: missing or obsolete translation" enabledByDefault="true" level="WARNING"
+                         implementationClass="app.heckit.ide.t3toolkit.xliff.XliffTranslationInspection"/>
+        <completion.contributor language="HTML" order="first" implementationClass="app.heckit.ide.t3toolkit.fluid.ViewHelperCompletion"/>
+        <completion.contributor language="any" order="first" implementationClass="app.heckit.ide.t3toolkit.fluid.FluidNameCompletion"/>
+        <completion.contributor language="any" order="first" implementationClass="app.heckit.ide.t3toolkit.icons.IconCompletion"/>
+        <gotoDeclarationHandler implementation="app.heckit.ide.t3toolkit.icons.IconGotoHandler"/>
+        <documentationProvider implementation="app.heckit.ide.t3toolkit.T3DocumentationProvider" order="first"/>
+        <renameHandler implementation="app.heckit.ide.t3toolkit.xliff.RenameLabelHandler"/>
+        <localInspection language="HTML" shortName="T3ViewHelperArguments" groupName="T3 Toolkit"
+                         displayName="ViewHelper: missing required argument" enabledByDefault="true" level="WARNING"
+                         implementationClass="app.heckit.ide.t3toolkit.fluid.ViewHelperArgumentInspection"/>
         <notificationGroup id="T3 Toolkit" displayType="BALLOON"/>
         <postStartupActivity implementation="app.heckit.ide.t3toolkit.ScreenshotStarter"/>
         <projectConfigurable parentId="language" id="app.heckit.ide.t3toolkit" displayName="T3 Toolkit"

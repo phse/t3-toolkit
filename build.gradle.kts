@@ -60,6 +60,21 @@ intellijPlatform {
             untilBuild = provider { null }
         }
         changeNotes = """
+            <h3>1.2.0</h3>
+            <ul>
+              <li>Labels (XLIFF): Cmd/Ctrl-click <code>LLL:EXT:…xlf:key</code> in any file, short keys in
+                  <code>f:translate</code>, own <code>translate</code> ViewHelpers and <code>LocalizationUtility::translate()</code>;
+                  completion of language files and keys; missing files and keys as errors with quick-fix <i>Create label</i>.</li>
+              <li>Labels are folded and show their text; hover shows all translations; Rename (Shift+F6) changes a key in
+                  every language file and usage.</li>
+              <li>Language files: usages of each label in the gutter, warnings for missing or obsolete translations.</li>
+              <li>Settings: own translation calls (ViewHelpers, methods, functions) with their key argument.</li>
+              <li>ViewHelpers: completion of tags (also without colon, <code>&lt;frend</code> → <code>f:render</code>) and
+                  arguments, warning for missing required arguments, documentation on hover.</li>
+              <li>Completion of partial, layout and section names.</li>
+              <li>Icons: Cmd/Ctrl-click and completion for <code>&lt;core:icon identifier="…"/&gt;</code>.</li>
+              <li>Subtler gutter icon, faded when a file or label is not used anywhere.</li>
+            </ul>
             <h3>1.1.0</h3>
             <ul>
               <li>Fluid Components: completion of component tags (prefix while typing, then all components of the

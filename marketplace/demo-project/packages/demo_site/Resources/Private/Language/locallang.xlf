@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en" datatype="plaintext" original="messages">
+    <body>
+      <trans-unit id="teaser.headline">
+        <source>Things to do</source>
+      </trans-unit>
+      <trans-unit id="teaser.more">
+        <source>Read more</source>
+      </trans-unit>
+      <trans-unit id="price.from">
+        <source>From</source>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

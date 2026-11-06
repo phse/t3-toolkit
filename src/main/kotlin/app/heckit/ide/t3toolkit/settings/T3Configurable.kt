@@ -16,6 +16,7 @@ class T3Configurable(private val project: Project) : BoundConfigurable("T3 Toolk
     private val settings = T3Settings.get(project)
     private var autoDetect = settings.state.autoDetectNamespaces
     private var namespaces = settings.state.namespaces
+    private var translationCalls = settings.state.translationCalls
 
     override fun createPanel(): DialogPanel {
         val detected = T3Project.DEFAULT_FLUID_NAMESPACES + T3Project.get(project).fluidNamespaces
@@ -35,11 +36,27 @@ class T3Configurable(private val project: Project) : BoundConfigurable("T3 Toolk
                             "They are used for ViewHelpers and Fluid Components in every template, on top of <code>{namespace …}</code> and <code>xmlns:…</code> in the file.")
                 }
             }
+            group("Translations") {
+                row {
+                    comment("Built in: " + app.heckit.ide.t3toolkit.xliff.TranslationCall.DEFAULTS.lines().joinToString(", ") { "<code>${StringUtil.escapeXmlEntities(it)}</code>" } +
+                        ", and <code>LLL:EXT:…</code> in every file.")
+                }
+                row {
+                    textArea().bindText(::translationCalls).rows(5).align(AlignX.FILL)
+                        .label("Additional calls with a label key:", com.intellij.ui.dsl.builder.LabelPosition.TOP)
+                        .comment("One per line, arguments in brackets: <code>key</code> = label key, <code>extension…</code> = extension " +
+                            "(key or UpperCamelCase), <code>_</code> = skip, alternatives with <code>|</code>.<br>" +
+                            "ViewHelper (attribute names, prefix <code>*</code> = any): <code>my:label(key|id, extensionName)</code><br>" +
+                            "PHP (position or named argument): <code>MyUtility::translate(key, extension)</code>, <code>-&gt;label(key)</code>, " +
+                            "<code>my_translate(_, key)</code><br>" +
+                            "Without an extension the label is looked up in <code>locallang.xlf</code> of the own extension, then of all others.")
+                }
+            }
         }
     }
 
     override fun apply() {
         super.apply()
-        settings.update(autoDetect, namespaces)
+        settings.update(autoDetect, namespaces, translationCalls)
     }
 }

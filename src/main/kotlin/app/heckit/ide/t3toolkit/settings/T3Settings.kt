@@ -16,6 +16,8 @@ class T3Settings : PersistentStateComponent<T3Settings.Data> {
         var autoDetectNamespaces: Boolean = true
         /** Eine Zeile je Präfix: `prefix = Vendor\Ext\ViewHelpers, Other\ViewHelpers` */
         var namespaces: String = ""
+        /** Eigene Übersetzungs-Aufrufe, eine Zeile je Aufruf (siehe TranslationCall). */
+        var translationCalls: String = ""
     }
 
     private var data = Data()
@@ -25,9 +27,10 @@ class T3Settings : PersistentStateComponent<T3Settings.Data> {
     var modificationCount = 0L
         private set
 
-    fun update(autoDetect: Boolean, namespaces: String) {
+    fun update(autoDetect: Boolean, namespaces: String, translationCalls: String) {
         data.autoDetectNamespaces = autoDetect
         data.namespaces = namespaces
+        data.translationCalls = translationCalls
         modificationCount++
     }
 

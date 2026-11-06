@@ -3,9 +3,9 @@
 <f:layout name="Default" />
 
 <f:section name="Main">
-  <ds:molecule.teaser title="Things to do" />
+  <ds:molecule.teaser title="{f:translate(key: 'teaser.headline')}" />
 
   <f:render partial="Teaser/List" arguments="{teasers: teasers}" />
 
-  <p class="price">From {demo:format.price(amount: 19.9)}</p>
+  <p class="price"><f:translate key="price.from" /> {demo:format.price(amount: 19.9)}</p>
 </f:section>

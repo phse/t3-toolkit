@@ -72,7 +72,7 @@ class FluidUsagesLineMarker : RelatedItemLineMarkerProvider() {
             "Templates" -> "Template"
             else -> "Component"
         }
-        val builder = NavigationGutterIconBuilder.create(app.heckit.ide.t3toolkit.T3Icons.GUTTER)
+        val builder = NavigationGutterIconBuilder.create(if (usages.isEmpty()) app.heckit.ide.t3toolkit.T3Icons.GUTTER_UNUSED else app.heckit.ide.t3toolkit.T3Icons.GUTTER)
             .setTargets(usages)
             .setTooltipText(tooltip(what, role.name, usages))
             .setPopupTitle("Usages of $what '${role.name}'")

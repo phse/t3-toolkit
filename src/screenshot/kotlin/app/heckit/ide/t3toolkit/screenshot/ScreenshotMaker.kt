@@ -86,6 +86,21 @@ object ScreenshotMaker {
         Thread.sleep(800)
         shot(frame, File(out, "03-attribute-quickfix.png"))
         edt { closePopups() }
+        // 5. Labels: Verwendungen eines trans-unit
+        val xlf = open(project, "Resources/Private/Language/locallang.xlf")
+        Thread.sleep(3000)
+        tidy(project, frame)
+        Thread.sleep(800)
+        clickGutter(project, xlf, xlf.document.text.indexOf("teaser.more"))
+        Thread.sleep(2500)
+        shot(frame, File(out, "05-label-usages.png"))
+        edt { closePopups() }
+        // 6. Labels im PHP-Code eingeklappt, fehlender Key als Fehler
+        open(project, "Configuration/TCA/Overrides/tt_content.php")
+        Thread.sleep(4000)
+        tidy(project, frame)
+        Thread.sleep(800)
+        shot(frame, File(out, "06-label-folding.png"))
         // 4. Dunkel: Services.yaml-Einträge an der PHP-Klasse
         edt { theme(laf, dark = true) }
         Thread.sleep(2500)

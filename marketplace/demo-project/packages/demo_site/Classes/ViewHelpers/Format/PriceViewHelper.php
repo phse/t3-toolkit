@@ -6,6 +6,11 @@ namespace Acme\DemoSite\ViewHelpers\Format;
 
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
+/**
+ * Formats an amount as a price with two decimals and a currency sign.
+ *
+ * <demo:format.price amount="19.9" />
+ */
 final class PriceViewHelper extends AbstractViewHelper
 {
     public function initializeArguments(): void
