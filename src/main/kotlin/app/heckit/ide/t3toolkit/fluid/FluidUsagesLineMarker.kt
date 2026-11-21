@@ -65,7 +65,9 @@ class FluidUsagesLineMarker : RelatedItemLineMarkerProvider() {
         val project = element.project
         val role = Fluid.roleOf(project, vf, file.viewProvider.contents) ?: return
         if (role.kind == "Component") relatedMarker(element, vf)?.let(result::add)
-        val usages = Fluid.usages(project, vf, role)
+        // Templates: auch die Extbase-Actions, die sie rendern
+        val actions = if (role.kind == "Templates") Extbase.actionsFor(project, vf, role.name).mapNotNull { it.nameIdentifier } else emptyList()
+        val usages = actions + Fluid.usages(project, vf, role)
         val what = when (role.kind) {
             "Partials" -> "Partial"
             "Layouts" -> "Layout"

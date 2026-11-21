@@ -48,6 +48,8 @@ dependencies {
         }
         bundledPlugin("com.jetbrains.php")
         bundledPlugin("org.jetbrains.plugins.yaml")
+        // Ab 2026.3 ist XML ein eigenes Plugin - beim Bau gegen eine lokale 2026.3 mitnehmen
+        if (platformLocalPath != null && file("$platformLocalPath/Contents/plugins/xml-plugin").isDirectory) bundledPlugin("com.intellij.xml")
         testFramework(TestFrameworkType.Platform)
     }
 }
@@ -60,6 +62,23 @@ intellijPlatform {
             untilBuild = provider { null }
         }
         changeNotes = """
+            <h3>1.3.0</h3>
+            <ul>
+              <li>TypoScript: own language for <code>.typoscript</code>, <code>.tsconfig</code>, <code>setup.txt</code> and
+                  <code>constants.txt</code> - highlighting, folding, structure view, breadcrumbs, formatter, commenter, brace matching.</li>
+              <li>TypoScript completion by object type (PAGE, CONFIG, FLUIDTEMPLATE, PAGEVIEW, stdWrap, data processors, TSconfig …)
+                  across files and copies, plus all keys set in the project; values, constants (also site settings), functions,
+                  conditions and <code>EXT:</code> paths.</li>
+              <li>TypoScript navigation (paths, copy sources, constants, PHP classes and methods, <code>@import</code> patterns),
+                  documentation on hover, checks for unclosed blocks, missing imports and undefined constants, quick-fix
+                  <code>&lt;INCLUDE_TYPOSCRIPT:</code> → <code>@import</code>.</li>
+              <li>Fluid inline syntax: highlighting, completion of ViewHelpers, arguments and variables, argument documentation,
+                  unknown ViewHelpers as errors, intentions inline ↔ tag and HTML comment → <code>&lt;f:comment&gt;</code>.</li>
+              <li>Extbase: gutter icons between <code>…Action()</code> and its template.</li>
+              <li>TCA: completion of keys and values, navigation from <code>foreign_table</code>, <code>foreign_field</code>,
+                  <code>MM</code>, <code>ctrl</code> fields and <code>showitem</code>.</li>
+              <li>New | TYPO3 | TypoScript File.</li>
+            </ul>
             <h3>1.2.0</h3>
             <ul>
               <li>Labels (XLIFF): Cmd/Ctrl-click <code>LLL:EXT:…xlf:key</code> in any file, short keys in

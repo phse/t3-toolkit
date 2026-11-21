@@ -1,0 +1,4 @@
+site {
+  title = Demo Site
+  description = Tickets, tours and travel packages
+}

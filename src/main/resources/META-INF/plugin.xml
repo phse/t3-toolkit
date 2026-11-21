@@ -5,9 +5,28 @@
 
     <description><![CDATA[
 <p>
-  Navigation for <b>TYPO3</b> (v12+) projects in both directions: from a Fluid template to its partials, layouts, sections
-  and Fluid Components - and from a partial, component or PHP class back to everything that uses it.
+  <b>TYPO3</b> (v12+) support: a <b>TypoScript</b> language with completion by object type, <b>Fluid</b> templates and
+  components with inline syntax highlighting and completion, labels (XLIFF), TCA and Services.yaml - with navigation in both
+  directions: from a template to its partials, layouts and components, and from a partial, label or PHP class back to everything
+  that uses it.
 </p>
+
+<h3>TypoScript</h3>
+<ul>
+  <li><b>Highlighting, folding, structure view, breadcrumbs, formatter</b> for <code>.typoscript</code>, <code>.tsconfig</code>,
+      <code>setup.txt</code> and <code>constants.txt</code> - parsed like TYPO3 v12+ does. Known properties and numeric keys get
+      their own colours.</li>
+  <li><b>Completion</b> by object type: <code>page.10.</code> after <code>page.10 = FLUIDTEMPLATE</code> offers <code>templateName</code>,
+      <code>dataProcessing</code>, <code>variables</code> …, also through copies (<code>&lt; lib.content</code>) in other files. Built-in
+      reference for PAGE, CONFIG, content objects, stdWrap, typolink, data processors and TSconfig (mod, TCEFORM, TCEMAIN …),
+      plus every key set in the project. Values: content objects, data processors, constants after <code>{$</code> (also site settings),
+      functions after <code>:=</code>, condition variables, <code>EXT:</code> paths.</li>
+  <li><b>Navigation</b>: Cmd/Ctrl-click a path to where it is set (also copy sources), <code>{$constant}</code> to its definition or site
+      setting, <code>userFunc</code> classes and methods, data processors, <code>@import</code> paths with <code>*</code>. Hover shows
+      the property documentation.</li>
+  <li><b>Checks</b>: unclosed blocks, missing imports, undefined constants, and deprecated <code>&lt;INCLUDE_TYPOSCRIPT:</code> with a
+      quick-fix to <code>@import</code>.</li>
+</ul>
 
 <h3>Fluid</h3>
 <ul>
@@ -34,6 +53,11 @@
       <code>f:variable</code>, <code>f:alias</code> in the same file, <code>&lt;fc:param&gt;</code> in a component, the
       <code>f:render arguments</code> that pass it to a partial, or TypoScript (<code>as =</code>, <code>variables.</code>) and
       PHP (<code>assign()</code>, <code>assignMultiple()</code>, <code>$processedData[]</code>) for templates.</li>
+  <li><b>Inline syntax</b>: highlighting of <code>{item.title -&gt; f:format.case(mode: 'upper')}</code> (variables, ViewHelpers,
+      arguments, strings, operators), completion of ViewHelpers, arguments and variables (including Extbase <code>assign()</code> and
+      TypoScript <code>variables</code>), documentation of inline arguments, unknown ViewHelpers marked as errors, intentions to switch
+      between inline and tag syntax and to turn HTML comments into <code>&lt;f:comment&gt;</code>.</li>
+  <li><b>Extbase</b>: a gutter icon leads from <code>listAction()</code> to <code>Templates/&lt;Controller&gt;/List.html</code> and back.</li>
   <li><code>EXT:</code> paths are clickable in every file.</li>
   <li>No more <i>Unresolved file reference</i> for Fluid expressions like <code>href="{f:uri.typolink(…)}"</code>.</li>
 </ul>
@@ -52,6 +76,15 @@
   <li>Hover a label to see all its translations; <i>Rename</i> (Shift+F6) changes the key in every language file and usage.</li>
 </ul>
 
+<h3>TCA</h3>
+<ul>
+  <li>Completion of keys and values in <code>Configuration/TCA</code> (also Overrides, <code>$GLOBALS['TCA']</code> and
+      <code>addTCAcolumns()</code>): config keys by <code>type</code>, <code>renderType</code>, <code>eval</code>, table names, fields
+      in <code>ctrl</code>, <code>foreign_field</code> and <code>showitem</code>, palettes.</li>
+  <li>Cmd/Ctrl-click <code>foreign_table</code>, <code>foreign_field</code>, <code>MM</code>, <code>ctrl</code> fields and
+      <code>showitem</code> entries to their definition.</li>
+</ul>
+
 <h3>Services.yaml</h3>
 <ul>
   <li>Cmd/Ctrl-click classes, <code>@service</code> references, <code>resource</code>/<code>exclude</code> paths and tag methods.</li>
@@ -66,9 +99,11 @@
 <h3>New classes</h3>
 <p><i>New | TYPO3</i> in a PSR-4 folder: event listener, console command, message handler, backend controller, public service and middleware,
 registered with PHP attributes - or in <code>Services.yaml</code> where the TYPO3 version needs it (e.g. event listeners on v12). Middlewares are added to <code>Configuration/RequestMiddlewares.php</code>.
-In a components folder: <i>New | TYPO3 | Fluid Component</i> with a parameter table (name, type, optional) and fixture.</p>
+In a components folder: <i>New | TYPO3 | Fluid Component</i> with a parameter table (name, type, optional) and fixture.
+Anywhere: <i>New | TYPO3 | TypoScript File</i>.</p>
 
-<p>Works alongside other TYPO3 plugins. TYPO3 is a registered trademark of the TYPO3 Association; this plugin is not affiliated with it.</p>
+<p>If another TypoScript or Fluid plugin is installed, disable it to avoid file type conflicts and duplicate highlighting.
+TYPO3 is a registered trademark of the TYPO3 Association; this plugin is not affiliated with it.</p>
 
 <p>Like T3 Toolkit? You can support it via <a href="https://github.com/sponsors/phse">GitHub Sponsors</a> or <a href="https://ko-fi.com/phse_de">buy me a coffee on Ko-fi</a>. More tools at <a href="https://heckit.app">heckit.app</a>.</p>
 
@@ -125,6 +160,67 @@ In a components folder: <i>New | TYPO3 | Fluid Component</i> with a parameter ta
         <localInspection language="HTML" shortName="T3ViewHelperArguments" groupName="T3 Toolkit"
                          displayName="ViewHelper: missing required argument" enabledByDefault="true" level="WARNING"
                          implementationClass="app.heckit.ide.t3toolkit.fluid.ViewHelperArgumentInspection"/>
+        <!-- TypoScript -->
+        <fileType name="T3 TypoScript" language="T3Toolkit.TypoScript" fieldName="INSTANCE"
+                  implementationClass="app.heckit.ide.t3toolkit.typoscript.TsFileType"
+                  extensions="typoscript;tsconfig;t3s" patterns="setup.txt;constants.txt;*setup.txt;*constants.txt;ext_typoscript_setup.txt;ext_typoscript_constants.txt"/>
+        <lang.parserDefinition language="T3Toolkit.TypoScript" implementationClass="app.heckit.ide.t3toolkit.typoscript.TsParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="T3Toolkit.TypoScript" implementationClass="app.heckit.ide.t3toolkit.typoscript.TsSyntaxHighlighterFactory"/>
+        <colorSettingsPage implementation="app.heckit.ide.t3toolkit.typoscript.TsColorSettingsPage"/>
+        <lang.commenter language="T3Toolkit.TypoScript" implementationClass="app.heckit.ide.t3toolkit.typoscript.TsCommenter"/>
+        <lang.braceMatcher language="T3Toolkit.TypoScript" implementationClass="app.heckit.ide.t3toolkit.typoscript.TsBraceMatcher"/>
+        <lang.foldingBuilder language="T3Toolkit.TypoScript" implementationClass="app.heckit.ide.t3toolkit.typoscript.TsFoldingBuilder"/>
+        <lang.foldingBuilder language="T3Toolkit.TypoScript" implementationClass="app.heckit.ide.t3toolkit.xliff.XliffFolding"/>
+        <lang.psiStructureViewFactory language="T3Toolkit.TypoScript" implementationClass="app.heckit.ide.t3toolkit.typoscript.TsStructureViewFactory"/>
+        <breadcrumbsInfoProvider implementation="app.heckit.ide.t3toolkit.typoscript.TsBreadcrumbsProvider"/>
+        <lang.formatter language="T3Toolkit.TypoScript" implementationClass="app.heckit.ide.t3toolkit.typoscript.TsFormattingModelBuilder"/>
+        <langCodeStyleSettingsProvider implementation="app.heckit.ide.t3toolkit.typoscript.TsCodeStyleSettingsProvider"/>
+        <annotator language="T3Toolkit.TypoScript" implementationClass="app.heckit.ide.t3toolkit.typoscript.TsAnnotator"/>
+        <fileBasedIndex implementation="app.heckit.ide.t3toolkit.typoscript.TsPathIndex"/>
+        <completion.contributor language="T3Toolkit.TypoScript" implementationClass="app.heckit.ide.t3toolkit.typoscript.TsCompletionContributor"/>
+        <typedHandler implementation="app.heckit.ide.t3toolkit.typoscript.TsTypedHandler"/>
+        <gotoDeclarationHandler implementation="app.heckit.ide.t3toolkit.typoscript.TsGotoHandler"/>
+        <lang.documentationProvider language="T3Toolkit.TypoScript" implementationClass="app.heckit.ide.t3toolkit.typoscript.TsDocumentationProvider"/>
+        <localInspection language="T3Toolkit.TypoScript" shortName="T3TypoScriptImport" groupName="T3 Toolkit"
+                         displayName="TypoScript: imported file not found" enabledByDefault="true" level="ERROR"
+                         implementationClass="app.heckit.ide.t3toolkit.typoscript.TsImportInspection"/>
+        <localInspection language="T3Toolkit.TypoScript" shortName="T3TypoScriptConstant" groupName="T3 Toolkit"
+                         displayName="TypoScript: constant not defined" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="app.heckit.ide.t3toolkit.typoscript.TsConstantInspection"/>
+        <localInspection language="T3Toolkit.TypoScript" shortName="T3TypoScriptInclude" groupName="T3 Toolkit"
+                         displayName="TypoScript: deprecated INCLUDE_TYPOSCRIPT" enabledByDefault="true" level="WARNING"
+                         implementationClass="app.heckit.ide.t3toolkit.typoscript.TsIncludeInspection"/>
+        <!-- Fluid: Inline-Syntax, Extbase -->
+        <annotator language="HTML" implementationClass="app.heckit.ide.t3toolkit.fluid.FluidInlineAnnotator"/>
+        <colorSettingsPage implementation="app.heckit.ide.t3toolkit.fluid.FluidColorSettingsPage"/>
+        <completion.contributor language="HTML" order="first" implementationClass="app.heckit.ide.t3toolkit.fluid.FluidInlineCompletion"/>
+        <typedHandler implementation="app.heckit.ide.t3toolkit.fluid.FluidInlineTypedHandler"/>
+        <localInspection language="HTML" shortName="T3FluidUnknownViewHelper" groupName="T3 Toolkit"
+                         displayName="Fluid: unknown ViewHelper" enabledByDefault="true" level="ERROR"
+                         implementationClass="app.heckit.ide.t3toolkit.fluid.FluidUnknownViewHelperInspection"/>
+        <intentionAction>
+            <language>HTML</language>
+            <className>app.heckit.ide.t3toolkit.fluid.FluidInlineToTagIntention</className>
+            <category>T3 Toolkit</category>
+        </intentionAction>
+        <intentionAction>
+            <language>HTML</language>
+            <className>app.heckit.ide.t3toolkit.fluid.FluidTagToInlineIntention</className>
+            <category>T3 Toolkit</category>
+        </intentionAction>
+        <intentionAction>
+            <language>HTML</language>
+            <className>app.heckit.ide.t3toolkit.fluid.FluidCommentIntention</className>
+            <category>T3 Toolkit</category>
+        </intentionAction>
+        <codeInsight.lineMarkerProvider language="PHP" implementationClass="app.heckit.ide.t3toolkit.fluid.ExtbaseLineMarker"/>
+        <highlightUsagesHandlerFactory implementation="app.heckit.ide.t3toolkit.fluid.FluidBraceHighlighterFactory"/>
+
+        <!-- TCA -->
+        <completion.contributor language="PHP" order="first" implementationClass="app.heckit.ide.t3toolkit.tca.TcaCompletionContributor"/>
+        <gotoDeclarationHandler implementation="app.heckit.ide.t3toolkit.tca.TcaGotoHandler"/>
+        <postStartupActivity implementation="app.heckit.ide.t3toolkit.OtherPluginsNotice"/>
+
         <notificationGroup id="T3 Toolkit" displayType="BALLOON"/>
         <postStartupActivity implementation="app.heckit.ide.t3toolkit.ScreenshotStarter"/>
         <projectConfigurable parentId="language" id="app.heckit.ide.t3toolkit" displayName="T3 Toolkit"
@@ -141,6 +237,7 @@ In a components folder: <i>New | TYPO3 | Fluid Component</i> with a parameter ta
             <action id="T3Toolkit.NewPublicService" class="app.heckit.ide.t3toolkit.create.NewT3ClassAction$PublicService"/>
             <action id="T3Toolkit.NewComponent" class="app.heckit.ide.t3toolkit.create.NewComponentAction"/>
             <action id="T3Toolkit.NewMiddleware" class="app.heckit.ide.t3toolkit.create.NewT3ClassAction$Middleware"/>
+            <action id="T3Toolkit.NewTypoScript" class="app.heckit.ide.t3toolkit.create.NewTypoScriptFileAction"/>
         </group>
     </actions>
 </idea-plugin>

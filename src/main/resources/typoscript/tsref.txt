@@ -1,0 +1,747 @@
+# TypoScript reference data for T3 Toolkit (own compilation, Apache-2.0).
+#
+# @type NAME [: PARENT]     a type; PARENT's properties are inherited
+# @root setup|tsconfig      top-level objects
+# name: TYPE | text         a property; TYPE "string/stdWrap" = value with stdWrap properties
+#                           "#" as name = numeric keys (10, 20 …), "*" = any key
+# name: TYPE = a,b,c | text known values
+
+@root setup
+page: PAGE | The page object - configure what the frontend renders.
+config: CONFIG | Global configuration of the page rendering.
+lib: LIB | Library objects to reference or copy elsewhere.
+plugin: PLUGINS | Configuration of plugins and Extbase extensions (plugin.tx_*).
+module: PLUGINS | Configuration of backend modules (module.tx_*).
+tt_content: CASE | Rendering of content elements by CType.
+styles: LIB | Objects of static templates.
+temp: LIB | Temporary objects, removed after parsing.
+sitetitle: string | Website title.
+types: ANY | Registered type numbers.
+
+@root tsconfig
+mod: MOD | Backend module configuration.
+TCEFORM: TCEFORM | Form engine: change fields per table.
+TCEMAIN: TCEMAIN | DataHandler settings (cache, permissions, copy).
+TCAdefaults: ANY | Default values of new records (table.field = value).
+RTE: ANY | Rich text editor configuration.
+options: OPTIONS | User TSconfig: backend options.
+setup: ANY | User TSconfig: user settings defaults and overrides.
+admPanel: ANY | User TSconfig: admin panel.
+page: TSCONFIG_PAGE | User TSconfig: override page TSconfig.
+templates: ANY | Template overrides of backend modules.
+tx_*: ANY | Extension settings.
+
+@type ANY
+*: ANY | Any key.
+
+@type LIB
+*: cObject | Object of the library.
+
+@type PLUGINS
+*: PLUGIN_CONFIG | tx_myext_pluginname or tx_myext.
+
+@type PLUGIN_CONFIG
+view: EXTBASE_VIEW | Template paths of the plugin.
+persistence: EXTBASE_PERSISTENCE | Storage folders and class mapping.
+settings: ANY | Settings available as {settings} in Fluid and $this->settings.
+features: ANY | Feature switches (e.g. skipDefaultArguments).
+mvc: ANY | MVC options (callDefaultActionIfActionCantBeResolved …).
+_LOCAL_LANG: ANY | Override labels per language (_LOCAL_LANG.de.key = …).
+_CSS_DEFAULT_STYLE: string | Default CSS of the plugin.
+userFunc: string | Plugin entry point (Class->method).
+
+@type EXTBASE_VIEW
+templateRootPaths: PATHS | Fallback paths to the templates; highest key wins.
+partialRootPaths: PATHS | Fallback paths to the partials; highest key wins.
+layoutRootPaths: PATHS | Fallback paths to the layouts; highest key wins.
+pluginNamespace: string | Namespace of the plugin arguments.
+defaultPid: string | Page ID the plugin links to (or "auto").
+
+@type EXTBASE_PERSISTENCE
+storagePid: string/stdWrap | Comma-separated page IDs where records are stored.
+recursive: integer | Levels below storagePid to include.
+classes: ANY | Mapping of domain classes to tables.
+updateReferenceIndex: boolean | Update the reference index on save.
+enableAutomaticCacheClearing: boolean | Clear the page cache on changes.
+
+@type PATHS
+#: string | Path to a folder, e.g. EXT:my_ext/Resources/Private/Templates/
+
+@type cObject
+# Placeholder for a content object; the real type comes from the assignment (= TEXT …).
+
+@type stdWrap
+setContentToCurrent: boolean/stdWrap | Sets the current value to the incoming content.
+addPageCacheTags: string/stdWrap | Comma-separated cache tags added to the page.
+setCurrent: string/stdWrap | Sets the current value.
+lang: ANY | Language-specific values (lang.de = …).
+data: getText/stdWrap | Fetches data (field:title, page:uid, date:Y, LLL:…, register:x …).
+field: string/stdWrap | Value of a field of the current record; "a // b" takes the first non-empty.
+current: boolean/stdWrap | Uses the current value.
+cObject: cObject | Content object whose output becomes the content.
+numRows: numRows/stdWrap | Number of rows of a select.
+preUserFunc: string | Function called with the content (Class->method).
+override: string/stdWrap | Replaces the content if not empty.
+preIfEmptyListNum: string/stdWrap | Like listNum, before ifEmpty.
+ifNull: string/stdWrap | Used if the content is null.
+ifEmpty: string/stdWrap | Used if the content is empty (0 counts as empty).
+ifBlank: string/stdWrap | Used if the content is blank (empty string).
+listNum: string/stdWrap | Item of a comma-separated list (0 = first, last, rand).
+trim: boolean/stdWrap | Removes whitespace around the content.
+strPad: strPad | Pads the content to a length.
+stdWrap: stdWrap | Nested stdWrap.
+required: boolean/stdWrap | Stops processing if the content is empty.
+if: if | Stops processing unless the condition is true.
+fieldRequired: string/stdWrap | Stops processing if this field is empty.
+csConv: string/stdWrap | Converts the content from this charset.
+parseFunc: parseFunc | Processes the content (links, tags, constants).
+HTMLparser: HTMLparser | Cleans HTML.
+split: split | Splits the content and renders each part.
+replacement: replacement | Search and replace.
+prioriCalc: boolean/stdWrap | Calculates the content (+ - * /), "intval" for integers.
+char: integer/stdWrap | Outputs chr() of the value.
+intval: boolean/stdWrap | Converts to integer.
+hash: string/stdWrap | Hashes the content (md5, sha1 …).
+round: round | Rounds the content.
+numberFormat: numberFormat | Formats a number.
+date: string/stdWrap | Formats a timestamp with PHP date().
+strtotime: string/stdWrap | Converts a date string to a timestamp.
+formattedDate: string/stdWrap | Formats a date with ICU patterns (locale-aware).
+age: string/stdWrap | Outputs the age of a timestamp.
+case: string/stdWrap = upper,lower,capitalize,ucfirst,lcfirst,uppercamelcase,lowercamelcase,camelcasetounderscored,underscoredtolowercamelcase,underscoredtouppercamelcase | Changes the case.
+bytes: string/stdWrap | Formats a number as file size.
+substring: string/stdWrap | Part of the content (start,length).
+cropHTML: string/stdWrap | Crops HTML content keeping tags valid.
+stripHtml: boolean/stdWrap | Removes HTML tags.
+crop: string/stdWrap | Crops the content: length | suffix | keep words.
+rawUrlEncode: boolean/stdWrap | URL-encodes the content.
+htmlSpecialChars: boolean/stdWrap | Escapes HTML special chars.
+encodeForJavaScriptValue: boolean/stdWrap | Encodes the content for a JavaScript string.
+doubleBrTag: string/stdWrap | Replaces double line breaks.
+br: boolean/stdWrap | Replaces line breaks with <br>.
+brTag: string/stdWrap | Replaces line breaks with this tag.
+encapsLines: encapsLines | Wraps each line.
+keywords: boolean/stdWrap | Splits the content into keywords.
+innerWrap: wrap/stdWrap | Wraps the content.
+innerWrap2: wrap/stdWrap | Wraps the content.
+preCObject: cObject | Content object placed before the content.
+postCObject: cObject | Content object placed after the content.
+wrapAlign: string/stdWrap | Wraps in a div with text-align.
+typolink: typolink | Wraps the content in a link.
+wrap: wrap/stdWrap | Wraps the content: before | after.
+noTrimWrap: string/stdWrap | Wrap that keeps whitespace: |before|after|
+wrap2: wrap/stdWrap | Another wrap.
+dataWrap: string/stdWrap | Wrap with {field:x} etc. replaced.
+prepend: cObject | Content object placed before the content.
+append: cObject | Content object placed after the content.
+wrap3: wrap/stdWrap | Another wrap.
+orderedStdWrap: ANY | Numbered stdWraps in order.
+outerWrap: wrap/stdWrap | Outermost wrap.
+insertData: boolean/stdWrap | Replaces {field:x} etc. in the content.
+postUserFunc: string | Function called with the content (Class->method).
+postUserFuncInt: string | Like postUserFunc, but not cached.
+prefixComment: string/stdWrap | HTML comment before the content (level | text).
+cacheRead: boolean/stdWrap | Reads the content from the cache.
+cacheStore: boolean/stdWrap | Stores the content in the cache.
+debug: boolean/stdWrap | Outputs the content with debug().
+debugFunc: boolean/stdWrap | Outputs the content with debug().
+debugData: boolean/stdWrap | Outputs the current record.
+cache: cache | Caches the result.
+
+@type TEXT : stdWrap
+value: string/stdWrap | Text to output.
+
+@type CASE
+key: string/stdWrap | Value that selects the object to render.
+default: cObject | Object used if no key matches.
+*: cObject | Object for a key value.
+if: if | Render only if true.
+setCurrent: string/stdWrap | Sets the current value.
+cache: cache | Caches the result.
+stdWrap: stdWrap | stdWrap of the result.
+
+@type COA
+#: cObject | Rendered in key order.
+if: if | Render only if true.
+wrap: wrap/stdWrap | Wraps the output.
+stdWrap: stdWrap | stdWrap of the output.
+cache: cache | Caches the result.
+
+@type COA_INT : COA
+
+@type CONTENT
+select: select | Query of the records.
+table: string/stdWrap | Table to select from (pages, tt_content or tx_*).
+renderObj: cObject | Object rendered per record (default: the table's TypoScript).
+slide: integer/stdWrap | Looks up the page tree if empty (-1 = up to the root).
+wrap: wrap/stdWrap | Wraps the output.
+stdWrap: stdWrap | stdWrap of the output.
+cache: cache | Caches the result.
+
+@type RECORDS
+source: string/stdWrap | Record IDs (tt_content_12, 13 …).
+tables: string/stdWrap | Allowed tables.
+categories: ANY | Records by category.
+dontCheckPid: boolean/stdWrap | Allow records from any page.
+conf: ANY | Render object per table (conf.tt_content = …).
+wrap: wrap/stdWrap | Wraps the output.
+stdWrap: stdWrap | stdWrap of the output.
+cache: cache | Caches the result.
+
+@type EXTBASEPLUGIN
+extensionName: string | Extension name in UpperCamelCase.
+pluginName: string | Plugin name as registered.
+view: EXTBASE_VIEW | Override template paths.
+settings: ANY | Override settings.
+persistence: EXTBASE_PERSISTENCE | Override storage.
+
+@type FILES
+files: string/stdWrap | Comma-separated sys_file UIDs.
+references: FILES_REFERENCES | File references of a record field.
+collections: string/stdWrap | sys_file_collection UIDs.
+folders: string/stdWrap | Folders (1:/path/), recursive optional.
+sorting: string/stdWrap | Field to sort by.
+begin: integer | First file.
+maxItems: integer/stdWrap | Maximum number of files.
+renderObj: cObject | Object rendered per file (data = file:current:…).
+stdWrap: stdWrap | stdWrap of the output.
+cache: cache | Caches the result.
+
+@type FILES_REFERENCES : stdWrap
+table: string | Table of the record.
+uid: string/stdWrap | UID of the record.
+fieldName: string/stdWrap | Field with the references.
+
+@type FLUIDTEMPLATE
+templateName: string/stdWrap | Template name, resolved in templateRootPaths (e.g. Default or Page/Home).
+template: cObject | Template as a content object.
+file: string/stdWrap | Path to the template file (EXT:…).
+templateRootPaths: PATHS | Fallback paths to templates; highest key wins.
+partialRootPaths: PATHS | Fallback paths to partials; highest key wins.
+layoutRootPaths: PATHS | Fallback paths to layouts; highest key wins.
+templateRootPath: string | Single template path (legacy).
+partialRootPath: string | Single partial path (legacy).
+layoutRootPath: string | Single layout path (legacy).
+format: string = html,xml,json,txt | File extension of the templates.
+variables: VARIABLES | Content objects available as Fluid variables.
+settings: ANY | Available as {settings} in the template.
+dataProcessing: DATA_PROCESSING | Data processors that add variables.
+extbase: FLUID_EXTBASE | Extbase context for ViewHelpers (links, translation).
+stdWrap: stdWrap | stdWrap of the output.
+cache: cache | Caches the result.
+
+@type PAGEVIEW
+paths: PATHS | Folders with Templates/Layouts/Partials; the template is chosen by the backend layout.
+variables: VARIABLES | Content objects available as Fluid variables.
+dataProcessing: DATA_PROCESSING | Data processors that add variables.
+cache: cache | Caches the result.
+
+@type FLUID_EXTBASE
+pluginName: string | Plugin name.
+controllerExtensionName: string | Extension name.
+controllerName: string | Controller name.
+controllerActionName: string | Action name.
+
+@type VARIABLES
+*: cObject | Variable name = content object.
+
+@type DATA_PROCESSING
+#: DATA_PROCESSOR | Processor alias (menu, files …) or class name.
+
+@type DATA_PROCESSOR
+as: string | Variable name of the result.
+dataProcessing: DATA_PROCESSING | Nested processors.
+if: if | Run only if true.
+
+@type DP:menu : DATA_PROCESSOR
+levels: integer/stdWrap | Number of levels.
+entryLevel: integer/stdWrap | Level to start from.
+special: string/stdWrap = directory,list,rootline,updated,browse,keywords,categories,language | Special menu type.
+special.value: string/stdWrap | Value of the special menu (page IDs …).
+expandAll: boolean/stdWrap | Show all sub pages.
+includeSpacer: boolean/stdWrap | Include spacer pages.
+includeNotInMenu: boolean/stdWrap | Include pages hidden in menus.
+excludeUidList: string/stdWrap | Page IDs to exclude.
+excludeDoktypes: string/stdWrap | Doktypes to exclude.
+titleField: string/stdWrap | Field(s) for the title ("nav_title // title").
+showAccessRestrictedPages: string | Show restricted pages (NONE or a page ID for the link).
+alternativeSortingField: string/stdWrap | Sort field.
+begin: integer | First item.
+maxItems: integer | Maximum number of items.
+
+@type DP:files : DATA_PROCESSOR
+references: FILES_REFERENCES | File references (references.fieldName = media).
+files: string/stdWrap | sys_file UIDs.
+collections: string/stdWrap | File collection UIDs.
+folders: string/stdWrap | Folders.
+folders.recursive: boolean | Include sub folders.
+sorting: string/stdWrap | Sort field.
+sorting.direction: string = ascending,descending | Sort direction.
+
+@type DP:database-query : DATA_PROCESSOR
+table: string/stdWrap | Table to query.
+pidInList: string/stdWrap | Page IDs.
+recursive: integer/stdWrap | Levels below pidInList.
+where: string/stdWrap | WHERE clause.
+orderBy: string/stdWrap | ORDER BY.
+max: integer/stdWrap | Maximum number of records.
+selectFields: string/stdWrap | Fields to select.
+uidInList: string/stdWrap | UIDs.
+markers: ANY | Markers for where.
+
+@type DP:split : DATA_PROCESSOR
+delimiter: string/stdWrap | Delimiter.
+fieldName: string/stdWrap | Field to split.
+removeEmptyEntries: boolean/stdWrap | Remove empty entries.
+filterIntegers: boolean/stdWrap | Keep integers only.
+filterUnique: boolean/stdWrap | Remove duplicates.
+
+@type DP:comma-separated-value : DATA_PROCESSOR
+fieldName: string/stdWrap | Field with the CSV data.
+fieldDelimiter: string/stdWrap | Field delimiter.
+fieldEnclosure: string/stdWrap | Field enclosure.
+maximumColumns: integer/stdWrap | Maximum number of columns.
+
+@type DP:flex-form : DATA_PROCESSOR
+fieldName: string/stdWrap | Field with the FlexForm XML (default pi_flexform).
+
+@type DP:gallery : DATA_PROCESSOR
+filesProcessedDataKey: string | Variable with the files.
+mediaOrientation: string/stdWrap | Position of the gallery.
+numberOfColumns: integer/stdWrap | Number of columns.
+equalMediaHeight: integer/stdWrap | Height of all media.
+equalMediaWidth: integer/stdWrap | Width of all media.
+maxGalleryWidth: integer/stdWrap | Maximum width of the gallery.
+maxGalleryWidthInText: integer/stdWrap | Maximum width next to text.
+columnSpacing: integer/stdWrap | Space between columns.
+borderEnabled: boolean/stdWrap | Show borders.
+borderWidth: integer/stdWrap | Border width.
+borderPadding: integer/stdWrap | Border padding.
+
+@type DP:language-menu : DATA_PROCESSOR
+languages: string/stdWrap | Language IDs or "auto".
+addQueryString: boolean | Keep query parameters.
+
+@type DP:site : DATA_PROCESSOR
+
+@type DP:site-language : DATA_PROCESSOR
+
+@type DP:record-transformation : DATA_PROCESSOR
+table: string | Table of the records.
+
+@type DP:page-content : DATA_PROCESSOR
+
+@type CONFIG
+absRefPrefix: string | Prefix for relative URLs (auto, / or a URL).
+additionalHeaders: ANY | Additional HTTP headers (10.header = …).
+admPanel: boolean | Show the admin panel.
+cache: ANY | Cache lifetime by records (cache.all = tt_news:2).
+cache_clearAtMidnight: boolean | Cache expires at midnight.
+cache_period: integer | Page cache lifetime in seconds.
+compressCss: boolean | Compress CSS files.
+compressJs: boolean | Compress JS files.
+concatenateCss: boolean | Concatenate CSS files.
+concatenateJs: boolean | Concatenate JS files.
+contentObjectExceptionHandler: string | Handler of exceptions in content objects (0 to disable).
+debug: boolean | Output parse times and debug information.
+disableAllHeaderCode: boolean | Output only the page content (for AJAX or JSON types).
+disableBodyTag: boolean | No <body> tag.
+disableCanonical: boolean | No canonical link.
+disableHrefLang: boolean | No hreflang links.
+disablePrefixComment: boolean | No prefix comments.
+disablePreviewNotification: boolean | No preview notice.
+doctype: string = html5,xhtml_trans,xhtml_frames,xhtml_basic,xhtml_11,xhtml_2,xhtml+rdfa_10,none | Document type.
+enableContentLengthHeader: boolean | Send a Content-Length header.
+extTarget: string | Target of external links.
+fileTarget: string | Target of file links.
+forceAbsoluteUrls: boolean | Make all URLs absolute.
+headerComment: string | Text added to the TYPO3 comment in the head.
+htmlTag: ANY | Attributes of the <html> tag (htmlTag.attributes.class = …).
+htmlTag_setParams: string | Attributes of the <html> tag (none to remove).
+htmlTag_stdWrap: stdWrap | stdWrap of the <html> tag.
+index_enable: boolean | Index the page (indexed_search).
+index_externals: boolean | Index external files.
+index_metatags: boolean | Index meta tags.
+inlineStyle2TempFile: boolean | Move inline CSS to a file.
+intTarget: string | Target of internal links.
+linkVars: string | Parameters added to all links (L, type(1-3) …).
+message_preview: string | Text of the preview notice.
+moveJsFromHeaderToFooter: boolean | Move all JavaScript to the footer.
+MP_defaults: string | Default mount points.
+MP_mapRootPoints: string | Mount point root points.
+namespaces: ANY | XML namespaces of the <html> tag.
+no_cache: boolean | Disable the page cache.
+noPageTitle: integer = 0,1,2 | Title handling (2 = no <title>).
+pageRendererTemplateFile: string | Template of the page renderer.
+pageTitle: stdWrap | stdWrap of the page title.
+pageTitleFirst: boolean | Page title before the website title.
+pageTitleProviders: ANY | Page title providers (provider, before, after).
+pageTitleSeparator: string/stdWrap | Separator between website and page title.
+recordLinks: ANY | Link handler configuration for records.
+removeDefaultCss: boolean | Remove CSS of plugins.
+removeDefaultJS: string = 0,1,external | Remove or externalize default JavaScript.
+removePageCss: boolean | Remove page CSS.
+sendCacheHeaders: boolean | Send cache headers for proxies.
+sendCacheHeadersForSharedCaches: string = auto,force | Cache headers for shared caches (s-maxage).
+showWebsiteTitle: boolean | Show the website title in <title>.
+spamProtectEmailAddresses: string | Encrypt email links (ascii or -10 … 10).
+spamProtectEmailAddresses_atSubst: string | Replacement of "@".
+spamProtectEmailAddresses_lastDotSubst: string | Replacement of the last dot.
+typolinkLinkAccessRestrictedPages: string | Page ID for links to restricted pages (NONE = keep).
+typolinkLinkAccessRestrictedPages_addParams: string | Parameters for those links.
+xmlprologue: string | XML prologue.
+
+@type PAGE
+typeNum: integer | Page type number (0 = default page, ?type=…).
+#: cObject | Content objects rendered in key order.
+bodyTag: string | The <body> tag.
+bodyTagAdd: string | Added to the <body> tag.
+bodyTagCObject: cObject | Content object for the <body> tag.
+config: CONFIG | Configuration for this page type.
+cssInline: ANY | Inline CSS (10 = TEXT …).
+footerData: ANY | Content objects at the end of the body.
+headerData: ANY | Content objects in the head.
+headTag: string/stdWrap | The <head> tag.
+includeCSS: ASSETS | CSS files (name = EXT:…/file.css).
+includeCSSLibs: ASSETS | CSS libraries (before includeCSS).
+includeJS: ASSETS | JavaScript files in the head.
+includeJSFooter: ASSETS | JavaScript files in the footer.
+includeJSFooterlibs: ASSETS | JavaScript libraries in the footer.
+includeJSLibs: ASSETS | JavaScript libraries in the head.
+inlineLanguageLabelFiles: ANY | Language files available in JavaScript.
+inlineSettings: ANY | Settings available in JavaScript (TYPO3.settings).
+jsFooterInline: ANY | Inline JavaScript in the footer.
+jsInline: ANY | Inline JavaScript in the head.
+meta: META | Meta tags (description = …, og:title = …).
+shortcutIcon: string | Path to the favicon.
+stdWrap: stdWrap | stdWrap of the page content.
+wrap: wrap | Wraps the page content.
+
+@type ASSETS
+*: ASSET | Name of the file entry = path (EXT:…).
+
+@type ASSET
+allWrap: wrap | Wraps the tag.
+async: boolean | async attribute (JavaScript).
+defer: boolean | defer attribute (JavaScript).
+crossorigin: string | crossorigin attribute.
+data: ANY | data-* attributes.
+disableCompression: boolean | Do not compress.
+excludeFromConcatenation: boolean | Do not concatenate.
+external: boolean | URL of an external file.
+forceOnTop: boolean | Put on top.
+if: if | Include only if true.
+inline: boolean | Output the content inline.
+integrity: string | integrity attribute.
+media: string | media attribute (CSS).
+nomodule: boolean | nomodule attribute.
+type: string | type attribute (e.g. module).
+title: string | title attribute (CSS).
+
+@type META
+*: string/stdWrap | Meta tag name = content; .attribute and .replace are optional.
+
+@type typolink
+parameter: string/stdWrap | Link target: page ID, t3://, URL, email, with target class title.
+extTarget: string/stdWrap | Target of external links.
+target: string/stdWrap | Target of internal links.
+fileTarget: string/stdWrap | Target of file links.
+no_cache: boolean/stdWrap | Add no_cache=1.
+additionalParams: string/stdWrap | Query parameters (&tx_x[y]=1).
+addQueryString: boolean/stdWrap | Keep the current query parameters (method, exclude).
+wrap: wrap/stdWrap | Wraps the link.
+ATagBeforeWrap: boolean | Link inside the wrap.
+ATagParams: string/stdWrap | Attributes of the <a> tag.
+title: string/stdWrap | title attribute.
+returnLast: string = url,target,result | Return only the URL or target instead of the tag.
+section: string/stdWrap | Anchor (#…).
+forceAbsoluteUrl: boolean/stdWrap | Absolute URL.
+linkAccessRestrictedPages: boolean | Link restricted pages.
+language: string/stdWrap | Language ID of the target.
+directImageLink: boolean/stdWrap | Link directly to the image.
+userFunc: string | Function that renders the link.
+
+@type if
+isTrue: string/stdWrap | True if the value is not empty and not 0.
+isFalse: string/stdWrap | True if the value is empty or 0.
+isPositive: string/stdWrap | True if the value is greater than 0.
+isGreaterThan: string/stdWrap | True if value is greater than this.
+isLessThan: string/stdWrap | True if value is less than this.
+equals: string/stdWrap | True if value equals this.
+isInList: string/stdWrap | True if value is in this list.
+value: string/stdWrap | Value to compare.
+negate: boolean | Inverts the result.
+directReturn: boolean | Returns this value directly.
+bitAnd: string/stdWrap | True if value & this.
+contains: string/stdWrap | True if value contains this.
+startsWith: string/stdWrap | True if value starts with this.
+endsWith: string/stdWrap | True if value ends with this.
+
+@type select
+uidInList: string/stdWrap | UIDs.
+pidInList: string/stdWrap | Page IDs (this = current page).
+recursive: integer/stdWrap | Levels below pidInList.
+orderBy: string/stdWrap | ORDER BY.
+groupBy: string/stdWrap | GROUP BY.
+max: integer/stdWrap | Maximum number of records.
+begin: integer/stdWrap | First record.
+where: string/stdWrap | WHERE clause (no AND at the start).
+languageField: string/stdWrap | Language field (0 to disable overlays).
+includeRecordsWithoutDefaultTranslation: boolean/stdWrap | Include records without a default translation.
+selectFields: string/stdWrap | Fields to select.
+join: string/stdWrap | JOIN.
+leftjoin: string/stdWrap | LEFT JOIN.
+rightjoin: string/stdWrap | RIGHT JOIN.
+markers: ANY | Markers (###name###) for where.
+
+@type imgResource
+ext: string/stdWrap | File extension of the result (jpg, png, webp …).
+width: string/stdWrap | Width; "c" crops, "m" keeps the ratio.
+height: string/stdWrap | Height; "c" crops, "m" keeps the ratio.
+maxW: integer/stdWrap | Maximum width.
+maxH: integer/stdWrap | Maximum height.
+minW: integer/stdWrap | Minimum width.
+minH: integer/stdWrap | Minimum height.
+crop: string/stdWrap | Crop area.
+cropVariant: string/stdWrap | Crop variant (default).
+params: string/stdWrap | ImageMagick parameters.
+sample: boolean | Use -sample instead of -geometry.
+noScale: boolean/stdWrap | Do not scale.
+frame: integer/stdWrap | Frame of a multi-page file.
+import: string/stdWrap | Path prefix of the file.
+treatIdAsReference: boolean/stdWrap | The value is a file reference UID.
+
+@type IMAGE
+file: imgResource | The image (path, file UID or reference).
+altText: string/stdWrap | alt attribute.
+titleText: string/stdWrap | title attribute.
+emptyTitleHandling: string = keepEmpty,useAlt,removeAttr | Empty title handling.
+layout: ANY | HTML per layout key (default, srcset, picture …).
+layoutKey: string/stdWrap | Selected layout.
+sourceCollection: ANY | Sizes for srcset or picture.
+linkWrap: string/stdWrap | Wraps the image in a link.
+params: string/stdWrap | Attributes of the <img> tag.
+cache: cache | Caches the result.
+stdWrap: stdWrap | stdWrap of the output.
+wrap: wrap/stdWrap | Wraps the output.
+if: if | Render only if true.
+
+@type IMG_RESOURCE
+file: imgResource | The image.
+cache: cache | Caches the result.
+stdWrap: stdWrap | stdWrap of the output.
+
+@type SVG
+src: string/stdWrap | Path to the SVG file.
+renderMode: string/stdWrap = inline | inline embeds the SVG.
+width: integer/stdWrap | Width.
+height: integer/stdWrap | Height.
+value: string/stdWrap | SVG code.
+cache: cache | Caches the result.
+stdWrap: stdWrap | stdWrap of the output.
+
+@type USER
+userFunc: string | Function that renders the content (Vendor\Ext\Class->method).
+cache: cache | Caches the result.
+stdWrap: stdWrap | stdWrap of the output.
+*: ANY | Passed to the function as $conf.
+
+@type USER_INT : USER
+
+@type LOAD_REGISTER
+*: string/stdWrap | Register name = value (data = register:name).
+
+@type RESTORE_REGISTER
+
+@type HMENU
+#: MENUOBJ | Menu per level (1 = TMENU …).
+entryLevel: integer/stdWrap | Level to start from (-1 = current level).
+special: string = directory,list,updated,rootline,browse,keywords,categories,language,userfunction | Special menu.
+special.value: string/stdWrap | Value of the special menu.
+minItems: integer/stdWrap | Minimum number of items.
+maxItems: integer/stdWrap | Maximum number of items.
+begin: integer/stdWrap | First item.
+excludeUidList: string/stdWrap | Page IDs to exclude.
+excludeDoktypes: string | Doktypes to exclude.
+includeNotInMenu: boolean/stdWrap | Include pages hidden in menus.
+alwaysActivePIDlist: string/stdWrap | Page IDs that are always active.
+protectLvar: string | Protect the L parameter.
+addQueryString: ANY | Keep query parameters.
+if: if | Render only if true.
+wrap: wrap/stdWrap | Wraps the menu.
+stdWrap: stdWrap | stdWrap of the menu.
+cache: cache | Caches the result.
+
+@type TMENU
+expAll: boolean/stdWrap | Show all sub menus.
+wrap: wrap | Wraps the level.
+NO: TMENUITEM | Normal state.
+IFSUB: TMENUITEM | Item with sub pages.
+ACT: TMENUITEM | Item in the rootline.
+ACTIFSUB: TMENUITEM | Active item with sub pages.
+CUR: TMENUITEM | Current page.
+CURIFSUB: TMENUITEM | Current page with sub pages.
+USR: TMENUITEM | Access-restricted page.
+SPC: TMENUITEM | Spacer.
+USERDEF1: TMENUITEM | User-defined state.
+USERDEF2: TMENUITEM | User-defined state.
+stdWrap: stdWrap | stdWrap of the level.
+
+@type MENUOBJ : TMENU
+
+@type TMENUITEM
+allWrap: wrap/stdWrap | Wraps the whole item.
+wrapItemAndSub: wrap/stdWrap | Wraps item and sub menu.
+linkWrap: wrap | Wraps the link text.
+stdWrap: stdWrap | stdWrap of the text.
+ATagParams: string/stdWrap | Attributes of the link.
+ATagTitle: string/stdWrap | title attribute.
+doNotLinkIt: boolean/stdWrap | No link.
+doNotShowLink: boolean/stdWrap | Hide the item.
+before: string/stdWrap | Before the link.
+after: string/stdWrap | After the link.
+additionalParams: string/stdWrap | Query parameters.
+
+@type strPad
+length: integer/stdWrap | Length.
+padWith: string/stdWrap | Fill character(s).
+type: string/stdWrap = right,left,both | Side to pad.
+
+@type round
+roundType: string/stdWrap = round,ceil,floor | Rounding method.
+decimals: integer/stdWrap | Decimals.
+round: boolean | Enable rounding.
+
+@type numberFormat
+decimals: integer/stdWrap | Decimals.
+dec_point: string/stdWrap | Decimal point.
+thousands_sep: string/stdWrap | Thousands separator.
+
+@type cache
+key: string/stdWrap | Cache identifier.
+lifetime: string/stdWrap | Lifetime in seconds, default or unlimited.
+tags: string/stdWrap | Cache tags.
+
+@type parseFunc
+allowTags: string | Allowed tags.
+denyTags: string | Denied tags.
+makelinks: ANY | Make URLs and emails clickable.
+constants: boolean | Replace ###CONST### markers.
+externalBlocks: string | Tags processed as blocks.
+htmlSanitize: boolean | Sanitize HTML.
+nonTypoTagStdWrap: stdWrap | stdWrap of text outside tags.
+nonTypoTagUserFunc: string | Function for text outside tags.
+short: ANY | Short replacements.
+tags: ANY | Content objects for tags (tags.link = TEXT …).
+plainTextStdWrap: stdWrap | stdWrap of plain text.
+userFunc: string | Function for the content.
+
+@type split
+token: string/stdWrap | Separator.
+max: integer/stdWrap | Maximum number of parts.
+min: integer/stdWrap | Minimum number of parts.
+returnKey: integer/stdWrap | Return only this part.
+returnCount: boolean/stdWrap | Return the number of parts.
+cObjNum: string/stdWrap | Object number per part (optionSplit).
+#: cObject | Object for the parts.
+wrap: wrap/stdWrap | Wraps each part.
+
+@type replacement
+#: REPLACEMENT_ITEM | Replacement in key order.
+
+@type REPLACEMENT_ITEM
+search: string/stdWrap | Text or pattern to search.
+replace: string/stdWrap | Replacement.
+useRegExp: boolean/stdWrap | search is a regular expression.
+useOptionSplitReplace: boolean/stdWrap | Use optionSplit for replace.
+
+@type encapsLines
+encapsTagList: string | Tags that already enclose lines.
+remapTag: ANY | Rename tags.
+addAttributes: ANY | Add attributes to tags.
+removeWrapping: boolean | Remove wrapping.
+wrapNonWrappedLines: wrap | Wraps lines without a tag.
+innerStdWrap_all: stdWrap | stdWrap of each line.
+encapsLinesStdWrap: ANY | stdWrap per tag.
+defaultAlign: string/stdWrap | Default alignment.
+nonWrappedTag: string | Tag of unwrapped lines.
+
+@type HTMLparser
+allowTags: string | Allowed tags.
+tags: ANY | Settings per tag.
+removeTags: string | Tags to remove.
+keepNonMatchedTags: string | Keep other tags (protect to escape).
+htmlSpecialChars: integer | Escape text.
+localNesting: string | Tags that must be nested correctly.
+globalNesting: string | Tags that must be nested correctly across the content.
+rmTagIfNoAttrib: string | Remove tags without attributes.
+noAttrib: string | Remove all attributes.
+removeComments: boolean | Remove HTML comments.
+xhtml_cleaning: boolean | Clean for XHTML.
+
+@type numRows
+table: string/stdWrap | Table.
+select: select | Query.
+
+@type MOD
+web_layout: ANY | Page module (BackendLayouts, tt_content.preview …).
+web_list: ANY | List module (allowedNewTables, hideTables …).
+web_info: ANY | Info module.
+web_view: ANY | Page preview.
+web_ts: ANY | TypoScript module.
+wizards: ANY | New content element wizard (wizards.newContentElement.wizardItems).
+SHARED: ANY | Settings shared by modules (colPos_list, defaultLanguageLabel …).
+linkvalidator: ANY | Link validator.
+tx_*: ANY | Extension modules.
+
+@type TCEFORM
+*: TCEFORM_TABLE | Table name.
+
+@type TCEFORM_TABLE
+*: TCEFORM_FIELD | Field name.
+
+@type TCEFORM_FIELD
+disabled: boolean | Hide the field.
+label: string | Override the label.
+removeItems: string | Remove select items (values).
+addItems: ANY | Add select items (value = label).
+keepItems: string | Keep only these select items.
+altLabels: ANY | Override item labels (value = label).
+altIcons: ANY | Override item icons.
+config: ANY | Override parts of the TCA config.
+types: ANY | Settings per record type.
+itemsProcFunc: ANY | Settings for the items function.
+PAGE_TSCONFIG_ID: integer | Value for ###PAGE_TSCONFIG_ID###.
+PAGE_TSCONFIG_IDLIST: string | Value for ###PAGE_TSCONFIG_IDLIST###.
+PAGE_TSCONFIG_STR: string | Value for ###PAGE_TSCONFIG_STR###.
+fileFolderConfig: ANY | Folder of file items.
+suggest: ANY | Settings of the suggest wizard.
+
+@type TCEMAIN
+clearCacheCmd: string | Pages or "all"/"pages" to clear on changes.
+clearCache_disable: boolean | Do not clear the cache.
+clearCache_pageGrandParent: boolean | Clear the grand parent page.
+clearCache_pageSiblingChildren: boolean | Clear sibling children.
+permissions: ANY | Default permissions of new pages (userid, groupid, user, group, everybody).
+table: ANY | Settings per table (table.tt_content.disablePrependAtCopy = 1).
+translateToMessage: string | Prefix of translated records.
+linkHandler: ANY | Link browser tabs.
+previewPageId: integer | Page for previews.
+
+@type OPTIONS
+clearCache: ANY | Clear cache menu (pages, all).
+pageTree: ANY | Page tree (showPageIdWithTitle, doktypesToShowInNewPageDragArea …).
+folderTree: ANY | Folder tree.
+file_list: ANY | File list.
+hideModules: string | Modules to hide.
+saveDocNew: ANY | Save and new buttons.
+saveDocView: ANY | Save and view buttons.
+contextMenu: ANY | Context menu.
+disableDelete: boolean | Disable deleting.
+defaultUploadFolder: string | Default upload folder.
+createFoldersInEB: boolean | Create folders in the element browser.
+
+@type TSCONFIG_PAGE
+mod: MOD | Override page TSconfig mod.
+TCEFORM: TCEFORM | Override page TSconfig TCEFORM.
+TCEMAIN: TCEMAIN | Override page TSconfig TCEMAIN.

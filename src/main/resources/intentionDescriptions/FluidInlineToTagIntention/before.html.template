@@ -1,0 +1,1 @@
+<p><spot>{f:translate(key: 'greeting', extensionName: 'MyExt')}</spot></p>

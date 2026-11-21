@@ -51,6 +51,13 @@ object ViewHelpers {
         return result
     }
 
+    /** Ob für jeden Namespace von [prefix] ViewHelper-Klassen im Projekt liegen (sonst ist „unbekannt“ nicht sicher). */
+    fun isComplete(file: PsiFile, prefix: String): Boolean {
+        val namespaces = namespacesFor(file)[prefix] ?: return false
+        val classes = allClasses(file.project)
+        return namespaces.all { ns -> classes.any { it.fqn.startsWith("\\$ns\\") } }
+    }
+
     fun isTagBased(cls: PhpClass): Boolean {
         var c: PhpClass? = cls
         val seen = HashSet<PhpClass>()

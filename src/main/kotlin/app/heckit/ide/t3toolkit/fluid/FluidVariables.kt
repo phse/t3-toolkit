@@ -45,6 +45,59 @@ object FluidVariables {
         return m.value.takeIf { it !in RESERVED }
     }
 
+    private val LOCAL_DEFS = listOf(
+        Regex("""\b(as|iteration|key|groupKey)\s*=\s*["']([A-Za-z_][A-Za-z0-9_]*)["']"""),
+        Regex("""f:variable\b[^>}]*?\bname\s*[=:]\s*["']([A-Za-z_][A-Za-z0-9_]*)["']"""),
+        Regex("""f:(?:for|groupedFor)\([^)]*?\b(as|iteration|key)\s*:\s*'([A-Za-z_][A-Za-z0-9_]*)'"""),
+    )
+    private val ALIAS_MAP = Regex("""f:alias\b[^>]*?\bmap\s*=\s*["']\{([^}]*)}""")
+    private val MAP_KEY = Regex("""([A-Za-z_][A-Za-z0-9_]*)\s*:""")
+    private val ARGUMENTS = Regex("""arguments\s*[=:]\s*["']?\{([^"]*?)}""")
+
+    /** Variablen, die in [file] an [offset] bekannt sein können, mit Herkunft (für die Vervollständigung). */
+    fun namesFor(file: PsiFile, offset: Int): List<Pair<String, String>> {
+        val result = LinkedHashMap<String, String>()
+        val text = file.viewProvider.contents
+        LOCAL_DEFS.forEach { r ->
+            r.findAll(text).forEach { m -> result.putIfAbsent(m.groupValues.last(), m.groupValues.getOrNull(1)?.takeIf { m.groupValues.size > 2 }?.let { "f:for $it" } ?: "f:variable") }
+        }
+        ALIAS_MAP.findAll(text).forEach { m -> MAP_KEY.findAll(m.groupValues[1]).forEach { result.putIfAbsent(it.groupValues[1], "f:alias") } }
+        val project = file.project
+        val vf = file.virtualFile ?: file.originalFile.virtualFile
+        if (vf != null) {
+            if (Fluid.isComponent(vf, text)) {
+                Fluid.componentParams(project, vf).forEach { result.putIfAbsent(it.name, "parameter" + (it.type?.let { t -> ": $t" } ?: "")) }
+                result.putIfAbsent("content", "component content")
+            } else {
+                val role = Fluid.roleOf(project, vf, text)
+                when (role?.kind) {
+                    "Partials" -> Fluid.usages(project, vf, role).forEach { usage ->
+                        val uText = usage.containingFile.viewProvider.contents
+                        val at = usage.textRange.startOffset
+                        val start = maxOf(uText.lastIndexOf('<', at), uText.lastIndexOf("{f:render", at), 0)
+                        val end = minOf(uText.length, at + 2000)
+                        ARGUMENTS.find(uText.subSequence(start, end))?.let { a ->
+                            MAP_KEY.findAll(a.groupValues[1]).forEach { result.putIfAbsent(it.groupValues[1], "f:render argument") }
+                        }
+                    }
+                    "Templates" -> {
+                        Extbase.actionsFor(project, vf, role.name).forEach { m ->
+                            Extbase.assignedVariables(m).forEach { result.putIfAbsent(it, "${m.containingClass?.name}::${m.name}()") }
+                        }
+                        tsTemplateVariables(project).forEach { (n, s) -> result.putIfAbsent(n, s) }
+                        result.putIfAbsent("data", "page or content record")
+                    }
+                    else -> {
+                        tsTemplateVariables(project).forEach { (n, s) -> result.putIfAbsent(n, s) }
+                        result.putIfAbsent("data", "page or content record")
+                    }
+                }
+            }
+        }
+        result.putIfAbsent("settings", "settings")
+        return result.toList()
+    }
+
     fun targets(file: PsiFile, offset: Int, name: String): List<PsiElement> {
         val project = file.project
         val vf = file.virtualFile ?: return emptyList()

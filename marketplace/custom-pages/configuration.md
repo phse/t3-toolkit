@@ -10,6 +10,55 @@
 
 The settings page lists the TYPO3 defaults and the detected namespaces.
 
+| Other pages | What |
+| --- | --- |
+| *Editor \| Color Scheme \| TypoScript* | colours of paths, known properties, numeric keys, values, object types, constants, conditions |
+| *Editor \| Color Scheme \| Fluid (TYPO3)* | colours inside `{…}`: braces, variables, properties, ViewHelpers, arguments, strings, operators |
+| *Editor \| Code Style \| TypoScript* | indentation (default 2 spaces like the TYPO3 core) |
+| *Editor \| Inspections \| T3 Toolkit* | all checks, e.g. undefined constants (weak warning), deprecated `INCLUDE_TYPOSCRIPT` |
+
+If another TypoScript or Fluid plugin is installed, T3 Toolkit shows a one-time notice: both register `.typoscript` and
+colour Fluid expressions - disable one of them.
+
+## TypoScript
+
+| Topic | Details |
+| --- | --- |
+| File types | `.typoscript`, `.tsconfig`, `.t3s`, `setup.txt`, `constants.txt`, `ext_typoscript_setup.txt` |
+| Syntax | TYPO3 v12+: one statement per line; text after `{`, `}`, `>`, a copy source or a condition is a comment; multi-line values end at a line starting with `)` |
+| Kinds | constants: file name contains `constants`; TSconfig: `.tsconfig`, `pagets`/`userts` in the name or a `TsConfig` folder; everything else is setup |
+| Types | from `= TYPE` (also `PAGE`, `CONFIG`), copies and references (`<`, `=<`, also relative `.x`), data processors by alias or class; otherwise from the parent's property |
+| Reference | PAGE, CONFIG, all content objects (TEXT, COA, FLUIDTEMPLATE, PAGEVIEW, CONTENT, RECORDS, FILES, IMAGE, HMENU, USER …), stdWrap, typolink, if, select, imgResource, parseFunc, data processors (menu, files, database-query, split, gallery …), plugin configuration (view, persistence, settings), TSconfig (mod, TCEFORM, TCEMAIN, TCAdefaults, options) |
+| Constants `{$…}` | constants files and site settings: `Configuration/Sets/*/settings.definitions.yaml`, `settings.yaml` of sets and sites |
+| `@import` | `EXT:` and relative paths (`./`, `../`), `*` patterns; a pattern only needs its folder to exist |
+
+## TCA
+
+Recognized in `Configuration/TCA/<table>.php` (`return [...]`), `Configuration/TCA/Overrides/*.php`,
+`$GLOBALS['TCA']['<table>'][…] = …` and `ExtensionManagementUtility::addTCAcolumns('<table>', [...])` (also via a variable).
+
+| Position | Completion / navigation |
+| --- | --- |
+| keys | table, `ctrl`, `ctrl.enablecolumns`, column, `config` (by `type`), `types`, `palettes`, `items` entries, `columnsOverrides` |
+| `type`, `renderType`, `format` | field types, render types and formats of that type |
+| `foreign_table`, `allowed` | tables with a TCA file → the file |
+| `MM` | tables from `ext_tables.sql` → `CREATE TABLE` |
+| `foreign_field`, `foreign_sortby`, `foreign_label` … | fields of the foreign table → the field |
+| `ctrl.label`, `sortby`, `languageField` …, `enablecolumns` | fields of the table → the field |
+| `showitem` | fields, `--palette--;;name`, `--div--;Label`, `--linebreak--` → field or palette |
+| `eval`, `l10n_mode`, `l10n_display`, `onChange` | known values |
+
+## Fluid inline syntax
+
+Expressions are recognized in text and attribute values of Fluid templates (files under `Resources/Private/` or with a
+Fluid namespace or `<f:` tag). Not touched: `{{ … }}` (Vue, Angular), `${…}` and JavaScript in `<script>` unless the
+expression is clearly Fluid (`{settings.url}`, `{x -> f:y()}`). Variables offered after `{` come from `f:for`/`f:variable`/
+`f:alias`, component parameters, `f:render` arguments of partials, the Extbase action (`assign()`, `assignMultiple()`) and
+TypoScript (`variables`, `dataProcessing … as`).
+
+Extbase actions: `Vendor\Ext\Controller\FooController::listAction()` ↔ `Resources/Private/Templates/Foo/List.html`
+(own extension and TypoScript template root paths).
+
 ## Fluid namespaces
 
 Resolved like TYPO3; the last registered wins.
@@ -75,7 +124,7 @@ Missing partials and layouts are only reported where the root folders are known.
 | `composer.json` | `extra.typo3/cms.extension-key` |
 | `ext_emconf.php` | folder name |
 
-No own index: everything is read from PSI and cached until the next change.
+Everything is read from PSI and cached until the next change; TypoScript paths have their own file index.
 
 ## Services.yaml quick-fixes
 

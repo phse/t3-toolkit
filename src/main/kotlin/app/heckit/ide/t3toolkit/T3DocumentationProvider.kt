@@ -30,6 +30,8 @@ class T3DocumentationProvider : AbstractDocumentationProvider() {
 
     private companion object {
         val INLINE_NAME = Regex("""(?<![A-Za-z0-9_.:/])([A-Za-z0-9_]+):([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)(?=\s*\()""")
+        val INLINE_CALL = Regex("""(?<![A-Za-z0-9_.:/])([A-Za-z0-9_]+):([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\s*\(([^()]*)\)""")
+        val ARG_NAME = Regex("""(?:^|[,\s(])([A-Za-z0-9_]+)\s*:""")
         fun esc(s: String?) = StringUtil.escapeXmlEntities(s.orEmpty())
     }
 
@@ -70,20 +72,23 @@ class T3DocumentationProvider : AbstractDocumentationProvider() {
             val parts = tag.name.split(':', limit = 2).takeIf { it.size == 2 } ?: return@let
             val cls = ViewHelpers.resolve(host, parts[0], parts[1]).firstOrNull() ?: return@let
             val arg = ViewHelpers.arguments(cls).firstOrNull { it.name == attr.name } ?: return@let
-            val html = DocumentationMarkup.DEFINITION_START + "<b>${esc(arg.name)}</b>" + (arg.type?.let { ": ${esc(it)}" } ?: "") +
-                DocumentationMarkup.DEFINITION_END + DocumentationMarkup.CONTENT_START + esc(arg.description) + DocumentationMarkup.CONTENT_END +
-                DocumentationMarkup.SECTIONS_START +
-                section("Required", if (arg.required) "yes" else "no") +
-                (arg.default?.let { section("Default", "<code>${esc(it)}</code>") } ?: "") +
-                section("ViewHelper", "${esc(tag.name)} (${esc(cls.name)})") +
-                DocumentationMarkup.SECTIONS_END
-            return DocElement(context, arg.name, html)
+            return DocElement(context, arg.name, argumentDoc(arg, tag.name, cls))
         }
         // ViewHelper-Tag oder Inline-Aufruf
         val lineStart = text.lastIndexOf('\n', (offset - 1).coerceAtLeast(0)) + 1
         val lineEnd = text.indexOf('\n', offset).let { if (it < 0) text.length else it }
         val line = text.subSequence(lineStart, lineEnd)
         val col = offset - lineStart
+        // Argument eines Inline-Aufrufs: {f:format.date(date: x, format: 'd.m.Y')}
+        INLINE_CALL.findAll(line).forEach { c ->
+            val args = c.groups[3] ?: return@forEach
+            if (col !in args.range) return@forEach
+            val a = ARG_NAME.findAll(args.value).firstOrNull { col - args.range.first in it.groups[1]!!.range.first..it.groups[1]!!.range.last + 1 }
+                ?: return@forEach
+            val cls = ViewHelpers.resolve(host, c.groupValues[1], c.groupValues[2]).firstOrNull() ?: return null
+            val arg = ViewHelpers.arguments(cls).firstOrNull { it.name == a.groupValues[1] } ?: return null
+            return DocElement(context, arg.name, argumentDoc(arg, "${c.groupValues[1]}:${c.groupValues[2]}", cls))
+        }
         val m = (Fluid.COMPONENT_TAG.findAll(line) + INLINE_NAME.findAll(line))
             .firstOrNull { col in it.groups[1]!!.range.first..it.groups[2]!!.range.last + 1 } ?: return null
         val name = "${m.groupValues[1]}:${m.groupValues[2]}"
@@ -91,6 +96,15 @@ class T3DocumentationProvider : AbstractDocumentationProvider() {
         val cls = ViewHelpers.resolve(host, m.groupValues[1], m.groupValues[2]).firstOrNull() ?: return null
         return DocElement(context, name, viewHelperDoc(name, cls))
     }
+
+    private fun argumentDoc(arg: app.heckit.ide.t3toolkit.fluid.VhArgument, viewHelper: String, cls: PhpClass): String =
+        DocumentationMarkup.DEFINITION_START + "<b>${esc(arg.name)}</b>" + (arg.type?.let { ": ${esc(it)}" } ?: "") +
+            DocumentationMarkup.DEFINITION_END + DocumentationMarkup.CONTENT_START + esc(arg.description) + DocumentationMarkup.CONTENT_END +
+            DocumentationMarkup.SECTIONS_START +
+            section("Required", if (arg.required) "yes" else "no") +
+            (arg.default?.let { section("Default", "<code>${esc(it)}</code>") } ?: "") +
+            section("ViewHelper", "${esc(viewHelper)} (${esc(cls.name)})") +
+            DocumentationMarkup.SECTIONS_END
 
     private fun section(title: String, value: String) =
         DocumentationMarkup.SECTION_HEADER_START + title + DocumentationMarkup.SECTION_SEPARATOR + value + DocumentationMarkup.SECTION_END

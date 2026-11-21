@@ -58,5 +58,7 @@ class T3Configurable(private val project: Project) : BoundConfigurable("T3 Toolk
     override fun apply() {
         super.apply()
         settings.update(autoDetect, namespaces, translationCalls)
+        // Markierungen und Faltungen in offenen Dateien gleich mit den neuen Einstellungen neu berechnen
+        com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.getInstance(project).restart("T3 Toolkit settings changed")
     }
 }

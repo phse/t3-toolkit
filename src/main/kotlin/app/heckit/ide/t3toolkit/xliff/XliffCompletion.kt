@@ -49,10 +49,12 @@ class XliffCompletion : CompletionContributor() {
         // Kurzer Schlüssel in f:translate: der Wert unter dem Cursor
         val vf = file.virtualFile ?: return
         if (vf.extension?.lowercase() != "html") return
-        val ref = Xliff.refAt(project, vf, text, offset) ?: return
+        // In der Kopie mit Platzhalter suchen - ein leeres key="" erkennt das Muster sonst nicht
+        val copyText = parameters.position.containingFile.viewProvider.contents
+        val ref = Xliff.refAt(project, vf, copyText, offset) ?: return
         if (ref.fileRange != null || offset !in ref.keyRange.first..ref.keyRange.last + 1) return
         val target = ref.file ?: return
-        addKeys(project, target, result.withPrefixMatcher(text.subSequence(ref.keyRange.first, offset).toString()))
+        addKeys(project, target, result.withPrefixMatcher(copyText.subSequence(ref.keyRange.first, offset).toString()))
     }
 
     private fun addKeys(project: Project, target: com.intellij.openapi.vfs.VirtualFile, result: CompletionResultSet) {

@@ -4,15 +4,23 @@
 
 Plugin ID `app.heckit.ide.t3toolkit` · Vendor heck\it ([heckit.app](https://heckit.app)) · [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/35716-t3-toolkit) · Source: https://github.com/phse/t3-toolkit · Support: [GitHub Sponsors](https://github.com/sponsors/phse) or [Ko-fi](https://ko-fi.com/phse_de) · Feedback and feature requests: [plugin-t3-toolkit@heckit.app](mailto:plugin-t3-toolkit@heckit.app)
 
-Navigation for TYPO3 (v12+) projects in JetBrains IDEs, in both directions: from Fluid templates to partials, layouts,
-sections and Fluid Components, from `Services.yaml` to PHP classes - and back to everything that uses them.
+TYPO3 (v12+) support for JetBrains IDEs: a TypoScript language (highlighting, completion by object type, navigation,
+formatting), Fluid templates and components with inline syntax highlighting and completion, labels (XLIFF), TCA and
+`Services.yaml` - navigation in both directions, back to everything that uses a file, label or class.
 
-![Usages of a partial in the gutter](marketplace/screenshots/01-partial-usages.png)
+![TypoScript with highlighting and structure view](marketplace/screenshots/01-typoscript.png)
 
 ## Features
 
 | Where | What |
 |---|---|
+| TypoScript | Own language for `.typoscript`, `.tsconfig`, `setup.txt`/`constants.txt` (TYPO3 v12+ syntax, parsed like the TYPO3 tokenizer): highlighting (*Settings \| Editor \| Color Scheme \| TypoScript*), known properties and numeric keys in their own colours, folding of blocks, multi-line values, comments and condition sections, structure view, breadcrumbs, commenter (`#`, `/* */`), brace matching, formatter (2 spaces like the TYPO3 core, *Code Style \| TypoScript*), *New \| TYPO3 \| TypoScript File*. |
+| TypoScript completion | Object paths by type from a built-in reference (`PAGE`, `CONFIG`, `FLUIDTEMPLATE`, `PAGEVIEW`, `stdWrap`, `typolink`, `select`, `imgResource`, `HMENU`, data processors `menu`/`files`/`database-query` …, TSconfig `mod`/`TCEFORM`/`TCEMAIN`/`options`) plus all keys set anywhere in the project; types follow assignments (`= FLUIDTEMPLATE`), copies and references (`< lib.x`) across files. Values: content objects, data processor aliases and classes, known values, booleans; constants after `{$` (constants files and site settings from `settings.definitions.yaml`/`settings.yaml`); functions after `:=`; variables and functions in conditions; `EXT:` paths in values, `@import` and `<INCLUDE_TYPOSCRIPT>`. |
+| TypoScript navigation | Cmd/Ctrl-click a path segment → where that object is set (copy sources `<`/`=<` included, relative `.x` too); `{$constant}` → constants file or site setting; `Vendor\Ext\Class->method` (userFunc, dataProcessing) → PHP class or method; data processor alias → class; `@import` with `*` patterns → matching files. Hover: property description and type, content object with its properties, constant values, functions. |
+| TypoScript checks | Unclosed blocks (also before a condition), stray `}`, missing operators and `)`; `@import`/`INCLUDE_TYPOSCRIPT` files that don't exist; constants defined nowhere (weak warning); `<INCLUDE_TYPOSCRIPT:` deprecated since v13 with quick-fix *Replace with @import* (folders → `*.typoscript`, `condition` → TypoScript condition). |
+| Fluid inline syntax | Highlighting inside `{…}` in text and attributes (*Color Scheme \| Fluid (TYPO3)*): braces, variables, properties, ViewHelpers, argument names, strings, numbers, operators; `{{ vue }}`, `${js}` and JavaScript in `<script>` stay untouched. Completion: `{f:`/`-> f:` → ViewHelpers with required arguments, `f:name(` → arguments, `{` → variables (from `f:for`/`f:variable`/`f:alias`, component parameters, `f:render` arguments of partials, Extbase `assign()`, TypoScript `variables`/`dataProcessing … as`). Hover an inline argument for its documentation. Unknown ViewHelpers (tag and inline) are errors where all classes of the prefix are known. Intentions: inline ↔ tag syntax, HTML comment → `<f:comment>`. |
+| Extbase | Gutter icon on `…Action()` methods → `Templates/<Controller>/<Action>.html` (own extension and TypoScript template paths); the template's gutter icon lists the action. |
+| TCA | In `Configuration/TCA/*.php`, `Overrides`, `$GLOBALS['TCA'][…]` and `addTCAcolumns()`: completion of keys (table, `ctrl`, columns, `config` by `type`, `types`, `palettes`, items) and values (`type`, `renderType` by type, `format`, `eval`, `l10n_mode`, table names for `foreign_table`/`allowed`, `MM` tables from `ext_tables.sql`, fields for `foreign_field`, `ctrl` fields like `label`/`sortby`, fields, palettes and tabs in `showitem`). Cmd/Ctrl-click these values → TCA file, field, palette or `CREATE TABLE`. |
 | Fluid | Cmd/Ctrl-click `partial="…"`, `section="…"`, `<f:layout name="…"/>` (tag and inline syntax). Root paths: `Resources/Private/<Kind>` of the own extension, `*RootPaths` from TypoScript, other extensions. |
 | ViewHelpers | Cmd/Ctrl-click `<f:format.html>`, `{f:count()}`, `{x -> my:thing()}` → class; attribute or inline argument → `registerArgument()` (also in parent classes). Namespaces like TYPO3: defaults (`f`, `core`), `ext_localconf.php` (`['SYS']['fluid']['namespaces']`), own list, `{namespace}`/`xmlns` - the last registered wins. |
 | ViewHelper completion | Tags (`<f:fo` → `f:format.html`, required arguments inserted) from all subclasses of `AbstractViewHelper` in the prefix's namespaces; arguments from `registerArgument()` (also parents) with type and description; missing required arguments are warnings. Hover a ViewHelper or argument for its DocBlock and argument table. |
@@ -72,9 +80,15 @@ first. The helper lives in `src/screenshot/` and is only compiled with `-Pscreen
 
 ## How it works
 
-No own index: extension roots come from `composer.json` (`extension-key`) and `ext_emconf.php`, root paths from
-TypoScript files, component namespaces from `ext_localconf.php`; all cached until the next PSI change. Usages are
-found via the IDE word index and checked by resolving each hit. `Services.yaml` files are read through the YAML PSI.
+Extension roots come from `composer.json` (`extension-key`) and `ext_emconf.php`, root paths from TypoScript files,
+component namespaces from `ext_localconf.php`; all cached until the next PSI change. Usages are found via the IDE word
+index and checked by resolving each hit. `Services.yaml` files are read through the YAML PSI.
+
+TypoScript has its own lexer and parser modelled on the TYPO3 v12+ tokenizer (line based; text after `{`, `}`, `>` or a
+condition is a comment). One file index (`TypoScriptPaths`) stores every path that is set, with operator and value, per
+kind (setup, constants, TSconfig) - completion, types and navigation read it. The property reference is
+`src/main/resources/typoscript/tsref.txt` (own compilation). Fluid inline expressions are found by a small scanner
+(`FluidInline`) and coloured by an annotator, so other HTML features keep working.
 
 ## License
 

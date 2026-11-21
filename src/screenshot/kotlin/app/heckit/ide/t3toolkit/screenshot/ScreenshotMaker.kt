@@ -2,7 +2,6 @@ package app.heckit.ide.t3toolkit.screenshot
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.application.ApplicationManager
@@ -59,6 +58,34 @@ object ScreenshotMaker {
             frame.setBounds(60, 40, 1440, 860)
         }
         Thread.sleep(3000)
+        // 2026.3 öffnet „What's New“ - alle Reiter schließen
+        edt { FileEditorManager.getInstance(project).openFiles.forEach { FileEditorManager.getInstance(project).closeFile(it) } }
+
+        // 0a. TypoScript: Farben, Struktur, Breadcrumb
+        val ts = open(project, "Configuration/TypoScript/setup.typoscript")
+        Thread.sleep(2500)
+        edt {
+            ts.caretModel.moveToOffset(ts.document.text.indexOf("templateName") + 4)
+            com.intellij.openapi.wm.ToolWindowManager.getInstance(project).getToolWindow("Structure")?.show()
+        }
+        Thread.sleep(3500)
+        tidy(project, frame)
+        Thread.sleep(800)
+        shot(frame, File(out, "01-typoscript.png"))
+        edt { com.intellij.openapi.wm.ToolWindowManager.getInstance(project).getToolWindow("Structure")?.hide() }
+        // 0b. Fluid-Inline: Farben und Intention „inline → Tag“
+        val tpl = open(project, "Resources/Private/Templates/Page/Default.html")
+        Thread.sleep(5000)
+        tidy(project, frame)
+        Thread.sleep(5000)
+        edt {
+            tpl.caretModel.moveToOffset(tpl.document.text.indexOf("demo:format.price(") + 6)
+            val psi = PsiDocumentManager.getInstance(project).getPsiFile(tpl.document)!!
+            ShowIntentionActionsHandler().invoke(project, tpl, psi)
+        }
+        Thread.sleep(2500)
+        shot(frame, File(out, "02-fluid-inline.png"))
+        edt { closePopups() }
 
         // 1. Partial: Verwendungen im Gutter
         partialUsages(project, frame, File(out, "01-partial-usages.png"))
@@ -138,9 +165,11 @@ object ScreenshotMaker {
     /** Klickt auf den T3-Toolkit-Marker der Zeile von [offset] (öffnet das Verwendungs-Popup). */
     private fun clickGutter(project: Project, editor: Editor, offset: Int) = edt {
         val line = editor.document.getLineNumber(offset)
-        val marker = DaemonCodeAnalyzerImpl.getLineMarkers(editor.document, project)
-            .firstOrNull { editor.document.getLineNumber(it.startOffset) == line && it.icon?.toString()?.contains("t3Gutter") == true }
-            ?: DaemonCodeAnalyzerImpl.getLineMarkers(editor.document, project).firstOrNull { editor.document.getLineNumber(it.startOffset) == line }
+        // Line-Marker über das Markup-Modell (DaemonCodeAnalyzerImpl.getLineMarkers fehlt ab 2026.3)
+        val markers = com.intellij.openapi.editor.impl.DocumentMarkupModel.forDocument(editor.document, project, true).allHighlighters
+            .mapNotNull { (it.gutterIconRenderer as? com.intellij.codeInsight.daemon.LineMarkerInfo.LineMarkerGutterIconRenderer<*>)?.lineMarkerInfo }
+        val marker = markers.firstOrNull { editor.document.getLineNumber(it.startOffset) == line && it.icon?.toString()?.contains("t3Gutter") == true }
+            ?: markers.firstOrNull { editor.document.getLineNumber(it.startOffset) == line }
             ?: error("no marker in line $line")
         log.warn("T3 Toolkit screenshot: marker ${marker.lineMarkerTooltip?.take(60)} handler=${marker.navigationHandler}")
         val gutter = (editor as EditorEx).gutterComponentEx

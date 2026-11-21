@@ -114,6 +114,14 @@ class XliffTest : BasePlatformTestCase() {
         val files = myFixture.completeBasic()?.map { it.lookupString }.orEmpty()
         assertTrue(files.toString(), "EXT:my_ext/Resources/Private/Language/locallang_db.xlf:" in files)
         assertFalse(files.toString(), files.any { "de.locallang" in it })
+
+        // Leeres key="" in f:translate: alle Schlüssel der Extension
+        val tpl = myFixture.addFileToProject("packages/my_ext/Resources/Private/Templates/Empty.html", "<f:translate key=\"\" />")
+        myFixture.configureFromExistingVirtualFile(tpl.virtualFile)
+        myFixture.editor.caretModel.moveToOffset(tpl.text.indexOf("\"\"") + 1)
+        val keys = myFixture.completeBasic()?.map { it.lookupString }
+        if (keys == null) assertTrue(myFixture.editor.document.text.contains("key=\"teaser.title\""))
+        else assertTrue(keys.toString(), "teaser.title" in keys)
     }
 
     fun testUsages() {
