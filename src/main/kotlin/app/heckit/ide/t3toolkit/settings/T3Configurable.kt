@@ -17,6 +17,7 @@ class T3Configurable(private val project: Project) : BoundConfigurable("T3 Toolk
     private var autoDetect = settings.state.autoDetectNamespaces
     private var namespaces = settings.state.namespaces
     private var translationCalls = settings.state.translationCalls
+    private var componentFolders = settings.state.componentFolders
 
     override fun createPanel(): DialogPanel {
         val detected = T3Project.DEFAULT_FLUID_NAMESPACES + T3Project.get(project).fluidNamespaces
@@ -34,6 +35,19 @@ class T3Configurable(private val project: Project) : BoundConfigurable("T3 Toolk
                         .label("Additional:", com.intellij.ui.dsl.builder.LabelPosition.TOP)
                         .comment("Additional namespaces, one prefix per line: <code>my = Vendor\\Ext\\ViewHelpers, Vendor\\Other\\ViewHelpers</code>. " +
                             "They are used for ViewHelpers and Fluid Components in every template, on top of <code>{namespace …}</code> and <code>xmlns:…</code> in the file.")
+                }
+            }
+            group("Fluid Components") {
+                val found = app.heckit.ide.t3toolkit.fluid.Fluid.detectedComponentFolders(project)
+                val foundText = if (found.isEmpty()) "none" else found.entries.joinToString("<br>") { (p, dirs) ->
+                    "<code>$p</code> = " + dirs.joinToString(", ") { StringUtil.escapeXmlEntities(T3Project.get(project).extPathOf(it) ?: it.presentableUrl) }
+                }
+                row { comment("Detected (fluid_components, ComponentCollection classes, <code>Vendor\\Ext\\Components</code> convention):<br>$foundText") }
+                row {
+                    textArea().bindText(::componentFolders).rows(4).align(AlignX.FILL)
+                        .label("Additional component folders:", com.intellij.ui.dsl.builder.LabelPosition.TOP)
+                        .comment("One prefix per line: <code>portal = EXT:portal/Resources/Private/Components</code> (or a path relative to the project). " +
+                            "<code>&lt;portal:structures.baseFigure&gt;</code> then opens <code>Structures/BaseFigure/BaseFigure.html</code> in that folder.")
                 }
             }
             group("Translations") {
@@ -57,7 +71,7 @@ class T3Configurable(private val project: Project) : BoundConfigurable("T3 Toolk
 
     override fun apply() {
         super.apply()
-        settings.update(autoDetect, namespaces, translationCalls)
+        settings.update(autoDetect, namespaces, translationCalls, componentFolders)
         // Markierungen und Faltungen in offenen Dateien gleich mit den neuen Einstellungen neu berechnen
         com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.getInstance(project).restart("T3 Toolkit settings changed")
     }

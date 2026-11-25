@@ -73,6 +73,17 @@ class T3Project private constructor(
         )
         val TS_EXTENSIONS = setOf("typoscript", "tsconfig", "tss", "t3s")
 
+        /** Ordner aus PHP-Code: `extPath('key', 'rel')` bzw. `'EXT:key/rel'`. */
+        fun dirFromPhp(project: Project, text: String): VirtualFile? {
+            val t3 = get(project)
+            EXT_PATH_CALL.find(text)?.let { c ->
+                val root = t3.extensions[c.groupValues[1]]
+                val rel = (c.groupValues[2] + c.groupValues[3]).trim('/')
+                (if (rel.isEmpty()) root else root?.findFileByRelativePath(rel))?.let { return it }
+            }
+            return EXT_STRING.findAll(text).firstNotNullOfOrNull { t3.resolveExtPath(it.groupValues[1])?.takeIf { d -> d.isDirectory } }
+        }
+
         fun get(project: Project): T3Project = CachedValuesManager.getManager(project).getCachedValue(project) {
             CachedValueProvider.Result.create(build(project), PsiModificationTracker.MODIFICATION_COUNT)
         }

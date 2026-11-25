@@ -7,8 +7,9 @@
 | Detect namespaces registered in `ext_localconf.php` | on / off | on |
 | Additional | one prefix per line: `my = Vendor\Ext\ViewHelpers, Vendor\Other\ViewHelpers` | – |
 | Additional calls with a label key | one call per line, see [Translations](#translations) | – |
+| Additional component folders | one prefix per line: `portal = EXT:portal/Resources/Private/Components` (or a path relative to the project) | – |
 
-The settings page lists the TYPO3 defaults and the detected namespaces.
+The settings page lists the TYPO3 defaults, the detected namespaces and the detected component folders.
 
 | Other pages | What |
 | --- | --- |
@@ -104,6 +105,10 @@ Only plain string literals are used as keys (no concatenation). Without an exten
 | --- | --- |
 | `ext_localconf.php` | `$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['fluid_components']['namespaces']['Vendor\\Ext\\Components'] = …;` |
 | Convention | `Vendor\Ext\Components` → `Resources/Private/Components` |
+| Fluid 4 (TYPO3 v14) | global namespace `['SYS']['fluid']['namespaces']['portal'] = ['Vendor\\Ext\\Components\\ComponentCollection']` → folder from `getTemplatePaths()` (`extPath()`, `EXT:…`, `__DIR__ . '…'`) |
+| Settings | *Additional component folders*: `portal = EXT:portal/Resources/Private/Components` |
+
+`<portal:structures.baseFigure>` resolves to `Structures/BaseFigure/BaseFigure.html`; parameters come from `<fc:param>` or `<f:argument>`.
 
 Component files: `<Name>/<Name>.html`, related `<Name>.fixture.json`, styles and scripts are offered via *Navigate | Related Symbol*.
 

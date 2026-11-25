@@ -57,7 +57,7 @@ class XliffTest : BasePlatformTestCase() {
     fun testCustomCalls() {
         setUpExtension()
         val settings = T3Settings.get(project)
-        settings.update(true, "", "my:label(name, ext)\nLabels::get(_, key, extension)\n->t(key)\nlbl(key)")
+        settings.update(true, "", "my:label(name, ext)\nLabels::get(_, key, extension)\n->t(key)\nlbl(key)", "")
         try {
             val php = "<?php\n\$a = Labels::get(\$x, 'teaser.title', 'my_ext');\n\$b = \$this->t('more');\n\$c = lbl(key: 'more');\n\$d = Labels::get(\$x, foo('a', 'b'), 'my_ext');"
             assertTrue(target(php, "teaser.title")!!.text.contains("teaser.title"))
@@ -67,7 +67,7 @@ class XliffTest : BasePlatformTestCase() {
             val html = "<my:label name=\"more\" ext=\"MyExt\" />"
             assertTrue(target(html, "more", "packages/my_ext/Resources/Private/Templates/X.html")!!.text.contains("Read more"))
         } finally {
-            settings.update(true, "", "")
+            settings.update(true, "", "", "")
         }
     }
 

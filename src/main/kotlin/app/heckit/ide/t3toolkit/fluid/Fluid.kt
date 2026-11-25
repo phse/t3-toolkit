@@ -13,6 +13,7 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
+import com.jetbrains.php.PhpIndex
 
 data class ComponentParam(val name: String, val type: String?, val optional: Boolean, val default: String?, val tag: XmlTag)
 
@@ -49,6 +50,8 @@ object Fluid {
 
     /** Components-Ordner und Restsegmente zu einem PHP-Namespace. */
     fun componentBase(project: Project, phpNs: String): Pair<VirtualFile, List<String>>? {
+        // Fluid 4 (TYPO3 v14): Namespace ist eine ComponentCollection-Klasse mit getTemplatePaths()
+        collectionDir(project, phpNs)?.let { return it to emptyList() }
         val t3 = T3Project.get(project)
         val registered = t3.componentNamespaces.entries
             .filter { phpNs == it.key || phpNs.startsWith(it.key + "\\") }
@@ -62,20 +65,60 @@ object Fluid {
         if (idx < 2) return null
         val key = parts[idx - 1].replace(Regex("(?<=[a-z0-9])([A-Z])"), "_$1").lowercase()
         val dir = t3.extensions[key]?.findFileByRelativePath("Resources/Private/Components") ?: return null
-        return dir to parts.drop(idx + 1)
+        return dir to parts.drop(idx + 1).filterNot { it.endsWith("Collection") }
     }
+
+    /** Components-Ordner aus einer ComponentCollection-Klasse (`EXT:…`, `extPath(…)` oder `__DIR__ . '…'`). */
+    private fun collectionDir(project: Project, phpNs: String): VirtualFile? {
+        val cls = PhpIndex.getInstance(project).getClassesByFQN("\\$phpNs").firstOrNull() ?: return null
+        val vf = cls.containingFile?.virtualFile ?: return null
+        val text = cls.text
+        T3Project.dirFromPhp(project, text)?.let { return it }
+        COLLECTION_DIR.find(text)?.let { m -> vf.parent?.findFileByRelativePath(m.groupValues[1].trim('/'))?.let { return it } }
+        return null
+    }
+
+    private val COLLECTION_DIR = Regex("""__DIR__\s*\.\s*['"]([^'"]+)['"]""")
 
     fun resolveComponent(project: Project, phpNs: String, localName: String): VirtualFile? {
         val (base, rest) = componentBase(project, phpNs) ?: return null
+        return resolveIn(base, rest, localName)
+    }
+
+    private fun resolveIn(base: VirtualFile, rest: List<String>, localName: String): VirtualFile? {
         val segments = rest + localName.split('.').map { it.replaceFirstChar(Char::uppercaseChar) }
         val dir = base.findFileByRelativePath(segments.joinToString("/")) ?: return null
         return dir.findChild(segments.last() + ".html")
+    }
+
+    /** Component-Ordner aus den Einstellungen für [prefix]. */
+    fun configuredFolders(project: Project, prefix: String): List<VirtualFile> {
+        val t3 = T3Project.get(project)
+        val baseDir = project.basePath?.let { com.intellij.openapi.vfs.LocalFileSystem.getInstance().findFileByPath(it) }
+        return app.heckit.ide.t3toolkit.settings.T3Settings.get(project).configuredComponentFolders()[prefix].orEmpty().mapNotNull { path ->
+            (if (path.startsWith("EXT:")) t3.resolveExtPath(path) else baseDir?.findFileByRelativePath(path.trim('/')))?.takeIf { it.isDirectory }
+        }
+    }
+
+    /** Erkannte Component-Ordner je Präfix (globale Namespaces), für die Einstellungen. */
+    fun detectedComponentFolders(project: Project): Map<String, List<VirtualFile>> {
+        val t3 = T3Project.get(project)
+        val result = LinkedHashMap<String, MutableList<VirtualFile>>()
+        t3.fluidNamespaces.forEach { (prefix, list) ->
+            list.forEach { ns ->
+                val (base, rest) = componentBase(project, ns) ?: return@forEach
+                val dir = base.findFileByRelativePath(rest.joinToString("/")) ?: return@forEach
+                result.getOrPut(prefix) { ArrayList() }.let { if (dir !in it) it += dir }
+            }
+        }
+        return result
     }
 
     /** Alle Components unter einem Präfix der Datei: lokaler Name (`molecule.teaser`) → HTML-Datei. */
     fun componentsFor(file: PsiFile, prefix: String): Map<String, VirtualFile> {
         if (prefix == "f" || prefix == "fc") return emptyMap()
         val result = LinkedHashMap<String, VirtualFile>()
+        configuredFolders(file.project, prefix).forEach { collectComponents(it, emptyList(), result) }
         ViewHelpers.namespacesFor(file)[prefix].orEmpty().forEach { ns ->
             val (base, rest) = componentBase(file.project, ns) ?: return@forEach
             val start = base.findFileByRelativePath(rest.joinToString("/")) ?: return@forEach
@@ -133,20 +176,21 @@ object Fluid {
     fun resolveComponentTag(file: PsiFile, tagName: String): VirtualFile? {
         val prefix = tagName.substringBefore(':', "")
         if (prefix.isEmpty() || prefix == "f" || prefix == "fc") return null
+        configuredFolders(file.project, prefix).firstNotNullOfOrNull { resolveIn(it, emptyList(), tagName.substringAfter(':')) }?.let { return it }
         val namespaces = ViewHelpers.namespacesFor(file)[prefix] ?: return null
         return namespaces.asReversed().firstNotNullOfOrNull { resolveComponent(file.project, it, tagName.substringAfter(':')) }
     }
 
     fun isComponent(file: VirtualFile, text: CharSequence): Boolean =
-        file.nameWithoutExtension == file.parent?.name && "<fc:component" in text
+        file.nameWithoutExtension == file.parent?.name && ("<fc:component" in text || "<f:argument" in text)
 
     fun componentParams(project: Project, file: VirtualFile): List<ComponentParam> {
         val psi = PsiManager.getInstance(project).findFile(file) as? XmlFile ?: return emptyList()
         return PsiTreeUtil.findChildrenOfType(psi, XmlTag::class.java)
-            .filter { it.name == "fc:param" }
+            .filter { it.name == "fc:param" || it.name == "f:argument" }
             .mapNotNull { tag ->
                 val name = tag.getAttributeValue("name") ?: return@mapNotNull null
-                val optional = tag.getAttributeValue("optional")?.let { it == "1" || it == "true" } ?: false
+                val optional = tag.getAttributeValue("optional")?.trim('{', '}', ' ')?.lowercase()?.let { it == "1" || it == "true" } ?: false
                 ComponentParam(name, tag.getAttributeValue("type"), optional, tag.getAttributeValue("default"), tag)
             }
     }

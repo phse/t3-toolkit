@@ -62,6 +62,13 @@ intellijPlatform {
             untilBuild = provider { null }
         }
         changeNotes = """
+            <h3>1.4.0</h3>
+            <ul>
+              <li>Fluid 4 components (TYPO3 v14): global namespaces pointing to a <code>ComponentCollection</code> class are
+                  resolved via its template path; <code>&lt;f:argument&gt;</code> parameters are completed.</li>
+              <li>Settings: detected component folders are listed, own folders can be added per prefix
+                  (<code>portal = EXT:portal/Resources/Private/Components</code>).</li>
+            </ul>
             <h3>1.3.0</h3>
             <ul>
               <li>TypoScript: own language for <code>.typoscript</code>, <code>.tsconfig</code>, <code>setup.txt</code> and

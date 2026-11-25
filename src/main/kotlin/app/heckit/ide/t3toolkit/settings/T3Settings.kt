@@ -18,6 +18,8 @@ class T3Settings : PersistentStateComponent<T3Settings.Data> {
         var namespaces: String = ""
         /** Eigene Übersetzungs-Aufrufe, eine Zeile je Aufruf (siehe TranslationCall). */
         var translationCalls: String = ""
+        /** Eigene Component-Ordner, eine Zeile je Präfix: `portal = EXT:portal/Resources/Private/Components` */
+        var componentFolders: String = ""
     }
 
     private var data = Data()
@@ -27,7 +29,8 @@ class T3Settings : PersistentStateComponent<T3Settings.Data> {
     var modificationCount = 0L
         private set
 
-    fun update(autoDetect: Boolean, namespaces: String, translationCalls: String) {
+    fun update(autoDetect: Boolean, namespaces: String, translationCalls: String, componentFolders: String) {
+        data.componentFolders = componentFolders
         data.autoDetectNamespaces = autoDetect
         data.namespaces = namespaces
         data.translationCalls = translationCalls
@@ -36,6 +39,13 @@ class T3Settings : PersistentStateComponent<T3Settings.Data> {
 
     /** Eigene Namespaces als Präfix → Liste. */
     fun configuredNamespaces(): Map<String, List<String>> = parse(data.namespaces)
+
+    /** Eigene Component-Ordner als Präfix → Pfade (`EXT:…` oder relativ zum Projekt). */
+    fun configuredComponentFolders(): Map<String, List<String>> = data.componentFolders.lines()
+        .map { it.substringBefore('#').trim() }
+        .filter { '=' in it }
+        .associate { l -> l.substringBefore('=').trim() to l.substringAfter('=').split(',').map { it.trim().trimEnd('/') }.filter { it.isNotEmpty() } }
+        .filterKeys { it.matches(Regex("[A-Za-z0-9_]+")) }
 
     companion object {
         fun get(project: Project): T3Settings = project.getService(T3Settings::class.java)

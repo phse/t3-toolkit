@@ -33,11 +33,11 @@
   <li><b>Partials, layouts and sections</b>: Cmd/Ctrl-click <code>partial="Some/Partial"</code>, <code>&lt;f:layout name="…"/&gt;</code>
       or <code>section="…"</code> (tag and inline syntax). Root paths from TypoScript (<code>partialRootPaths</code> …) are included.
       Partials and layouts that cannot be found are marked as errors.</li>
-  <li><b>Fluid Components</b> (<code>fluid_components</code>): completion of component tags (prefixes as you type, <code>&lt;my:</code> lists all components
+  <li><b>Fluid Components</b> (<code>fluid_components</code> and Fluid 4 components of TYPO3 v14): completion of component tags (prefixes as you type, <code>&lt;my:</code> lists all components
       of the namespace and inserts the required parameters), Cmd/Ctrl-click a component tag like <code>&lt;my:molecule.teaser&gt;</code>,
-      parameter completion from <code>&lt;fc:param&gt;</code> with type and required/optional, warning for missing required parameters.
+      parameter completion from <code>&lt;fc:param&gt;</code> / <code>&lt;f:argument&gt;</code> with type and required/optional, warning for missing required parameters.
       Unknown components are marked as errors. Gutter icon and <i>Navigate | Related Symbol</i> lead to the
-      component files (<code>.fixture.json</code>, <code>Styles</code>, <code>Scripts</code> …). Namespaces registered in <code>ext_localconf.php</code> are resolved.</li>
+      component files (<code>.fixture.json</code>, <code>Styles</code>, <code>Scripts</code> …). Namespaces registered in <code>ext_localconf.php</code> and <code>ComponentCollection</code> classes are resolved, own component folders can be added in the settings.</li>
   <li><b>Usages in the gutter</b>: partials, layouts, templates and components show where they are used - in other
       templates, partials and TypoScript (<code>EXT:</code> paths, <code>templateName</code>).</li>
   <li><b>ViewHelpers</b>: Cmd/Ctrl-click <code>&lt;f:format.html&gt;</code>, <code>{f:count()}</code> or <code>{x -&gt; my:thing()}</code> to open the

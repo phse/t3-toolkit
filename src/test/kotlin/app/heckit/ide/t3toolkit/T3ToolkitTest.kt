@@ -297,4 +297,42 @@ class T3ToolkitTest : BasePlatformTestCase() {
         val r = gotoTargets(tpl, "easers\n", FluidGotoHandler())
         assertTrue(r.toString(), r.any { it.contains("P.php#") })
     }
+
+    /** TYPO3 v14: Fluid 4 Components mit `<f:argument>`, globaler Namespace auf eine ComponentCollection-Klasse. */
+    fun testFluid4ComponentCollection() {
+        setUpExtension()
+        myFixture.addFileToProject("packages/site/ext_localconf.php",
+            "<?php\n\$GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['portal'] = ['Vendor\\\\MyExt\\\\Components\\\\ComponentCollection'];")
+        myFixture.addFileToProject("packages/my_ext/Classes/Components/ComponentCollection.php", """
+            <?php
+            namespace Vendor\MyExt\Components;
+            final class ComponentCollection {
+                public function getTemplatePaths() {
+                    ${'$'}p = new TemplatePaths();
+                    ${'$'}p->setTemplateRootPaths([ExtensionManagementUtility::extPath('my_ext', 'Resources/Private/Fluid4')]);
+                    return ${'$'}p;
+                }
+            }
+        """.trimIndent())
+        myFixture.addFileToProject("packages/my_ext/Resources/Private/Fluid4/Structures/BaseFigure/BaseFigure.html",
+            "<f:argument name=\"image\" type=\"array\" />\n<f:argument name=\"alt\" type=\"string\" optional=\"{true}\" />\n<img />")
+        val tpl = myFixture.addFileToProject("packages/my_ext/Resources/Private/Templates/Use.html", "<portal:Structures.BaseFigure image=\"{x}\" />")
+        assertTrue(gotoTargets(tpl, "Structures.BaseFigure", FluidGotoHandler()).single().endsWith("Fluid4/Structures/BaseFigure/BaseFigure.html"))
+        val fig = myFixture.findFileInTempDir("packages/my_ext/Resources/Private/Fluid4/Structures/BaseFigure/BaseFigure.html")
+        assertEquals(listOf("image" to false, "alt" to true), Fluid.componentParams(project, fig).map { it.name to it.optional })
+    }
+
+    /** Eigene Component-Ordner aus den Einstellungen. */
+    fun testConfiguredComponentFolder() {
+        setUpExtension()
+        myFixture.addFileToProject("packages/my_ext/Resources/Private/Own/Atom/Icon/Icon.html", "<f:argument name=\"id\" />")
+        val settings = app.heckit.ide.t3toolkit.settings.T3Settings.get(project)
+        try {
+            settings.update(true, "", "", "own = EXT:my_ext/Resources/Private/Own")
+            val tpl = myFixture.addFileToProject("packages/my_ext/Resources/Private/Templates/Own.html", "<own:atom.icon id=\"x\" />")
+            assertTrue(gotoTargets(tpl, "atom.icon", FluidGotoHandler()).single().endsWith("Own/Atom/Icon/Icon.html"))
+        } finally {
+            settings.update(true, "", "", "")
+        }
+    }
 }
