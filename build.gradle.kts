@@ -62,6 +62,10 @@ intellijPlatform {
             untilBuild = provider { null }
         }
         changeNotes = """
+            <h3>1.4.1</h3>
+            <ul>
+              <li>Clearer plugin description for TYPO3 Fluid templates and components.</li>
+            </ul>
             <h3>1.4.0</h3>
             <ul>
               <li>Fluid 4 components (TYPO3 v14): global namespaces pointing to a <code>ComponentCollection</code> class are

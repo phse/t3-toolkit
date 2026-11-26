@@ -5,10 +5,9 @@
 
     <description><![CDATA[
 <p>
-  <b>TYPO3</b> (v12+) support: a <b>TypoScript</b> language with completion by object type, <b>Fluid</b> templates and
-  components with inline syntax highlighting and completion, labels (XLIFF), TCA and Services.yaml - with navigation in both
-  directions: from a template to its partials, layouts and components, and from a partial, label or PHP class back to everything
-  that uses it.
+  <b>TYPO3 Fluid</b> navigation and completion (v12+) in both directions: from a <b>Fluid template</b> to its partials, layouts,
+  sections and <b>Fluid Components</b>, and from a partial, label or PHP class back to everything that uses it. Plus a
+  <b>TypoScript</b> language with completion by object type, Fluid inline syntax, labels (XLIFF), TCA and Services.yaml.
 </p>
 
 <h3>TypoScript</h3>
@@ -28,7 +27,7 @@
       quick-fix to <code>@import</code>.</li>
 </ul>
 
-<h3>Fluid</h3>
+<h3>Fluid templates and components</h3>
 <ul>
   <li><b>Partials, layouts and sections</b>: Cmd/Ctrl-click <code>partial="Some/Partial"</code>, <code>&lt;f:layout name="…"/&gt;</code>
       or <code>section="…"</code> (tag and inline syntax). Root paths from TypoScript (<code>partialRootPaths</code> …) are included.
